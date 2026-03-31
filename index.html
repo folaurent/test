@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snake 3D — Neon Arcade</title>
+  <title>NOLAN Snake 3D — Euro Edition</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,8 +11,8 @@
   <!-- Menu d'accueil -->
   <div id="menu" class="overlay">
     <div class="panel">
-      <h1 class="neon-title">SNAKE<span class="accent">3D</span></h1>
-      <p class="tagline">NEON ARCADE EDITION</p>
+      <h1 class="neon-title"><span class="letter-n">N</span><span class="letter-o">O</span><span class="letter-l">L</span><span class="letter-a">A</span><span class="letter-nn">N</span></h1>
+      <p class="tagline">SNAKE &bull; EURO EDITION</p>
       <div class="option-block">
         <label>Mode de jeu</label>
         <div class="toggle-row">
@@ -21,16 +21,16 @@
         </div>
       </div>
       <button id="btn-play" class="btn-neon">JOUER</button>
-      <div class="info">Meilleur score : <span id="menu-best">0</span></div>
-      <div class="hint">Flèches / ZQSD &bull; Espace = Pause</div>
+      <div class="info">Meilleur score : <span id="menu-best">0</span>€</div>
+      <div class="hint">Fleches / ZQSD &bull; Espace = Pause</div>
     </div>
   </div>
 
   <!-- HUD en jeu -->
   <div id="hud" class="hud hidden">
-    <div class="hud-left">SCORE <span id="score">0</span></div>
+    <div class="hud-left">SCORE <span id="score">0</span>€</div>
     <div class="hud-center" id="hud-mode">MURS</div>
-    <div class="hud-right">BEST <span id="best-score">0</span></div>
+    <div class="hud-right">BEST <span id="best-score">0</span>€</div>
   </div>
 
   <!-- Overlay pause -->
@@ -46,14 +46,13 @@
   <div id="gameover" class="overlay hidden">
     <div class="panel">
       <h2 class="neon-sub red">GAME OVER</h2>
-      <p class="final">Score : <span id="final-score">0</span></p>
-      <p class="final small">Meilleur : <span id="final-best">0</span></p>
+      <p class="final">Gains : <span id="final-score">0</span>€</p>
+      <p class="final small">Record : <span id="final-best">0</span>€</p>
       <button id="btn-replay" class="btn-neon">Rejouer</button>
       <button id="btn-menu" class="btn-ghost">Menu</button>
     </div>
   </div>
 
-  <!-- Three.js depuis CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="script.js"></script>
 </body>

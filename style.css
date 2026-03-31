@@ -1,5 +1,5 @@
 /* ========================================
-   Snake 3D Neon Arcade — Styles
+   NOLAN Snake 3D — Euro Edition — Styles
    ======================================== */
 
 * {
@@ -9,7 +9,7 @@
 }
 
 body {
-  background: #050510;
+  background: #040410;
   color: #e0e0e0;
   font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   overflow: hidden;
@@ -33,38 +33,37 @@ canvas {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(5, 5, 16, 0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(4, 4, 16, 0.88);
+  backdrop-filter: blur(10px);
 }
 
-.overlay.hidden {
-  display: none;
-}
+.overlay.hidden { display: none; }
 
 .panel {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 22px;
-  padding: 48px 56px;
-  background: rgba(15, 15, 30, 0.9);
-  border: 1px solid rgba(0, 255, 170, 0.15);
-  border-radius: 16px;
-  box-shadow: 0 0 60px rgba(0, 255, 170, 0.08);
+  padding: 48px 60px;
+  background: rgba(12, 12, 28, 0.92);
+  border: 1px solid rgba(0, 255, 170, 0.12);
+  border-radius: 18px;
+  box-shadow: 0 0 80px rgba(0, 255, 170, 0.06), 0 0 40px rgba(255, 200, 0, 0.04);
 }
 
-/* ---- Titre néon ---- */
+/* ---- Titre NOLAN avec lettres colorées ---- */
 .neon-title {
-  font-size: 3.8rem;
+  font-size: 4.5rem;
   font-weight: 900;
-  letter-spacing: 8px;
-  color: #fff;
-  text-shadow: 0 0 10px rgba(0, 255, 170, 0.6), 0 0 40px rgba(0, 255, 170, 0.3);
+  letter-spacing: 12px;
+  text-shadow: 0 0 15px rgba(0, 255, 170, 0.5), 0 0 50px rgba(0, 255, 170, 0.2);
 }
 
-.neon-title .accent {
-  color: #00ffaa;
-}
+.letter-n  { color: #00ffaa; }
+.letter-o  { color: #00ddff; }
+.letter-l  { color: #aa66ff; }
+.letter-a  { color: #ffaa00; }
+.letter-nn { color: #ff4488; }
 
 .neon-sub {
   font-size: 2.4rem;
@@ -76,20 +75,20 @@ canvas {
 
 .neon-sub.red {
   color: #ff2255;
-  text-shadow: 0 0 10px rgba(255, 34, 85, 0.6), 0 0 40px rgba(255, 34, 85, 0.3);
+  text-shadow: 0 0 12px rgba(255, 34, 85, 0.6), 0 0 40px rgba(255, 34, 85, 0.25);
 }
 
 .tagline {
-  font-size: 0.85rem;
-  letter-spacing: 5px;
+  font-size: 0.9rem;
+  letter-spacing: 6px;
   color: #555;
-  margin-top: -10px;
+  margin-top: -8px;
 }
 
 /* ---- Boutons ---- */
 .btn-neon {
   background: linear-gradient(135deg, #00ffaa, #00cc88);
-  color: #050510;
+  color: #040410;
   border: none;
   padding: 15px 50px;
   font-size: 1.15rem;
@@ -106,9 +105,7 @@ canvas {
   box-shadow: 0 6px 30px rgba(0, 255, 170, 0.35);
 }
 
-.btn-neon:active {
-  transform: translateY(0);
-}
+.btn-neon:active { transform: translateY(0); }
 
 .btn-ghost {
   background: transparent;
@@ -125,8 +122,8 @@ canvas {
 }
 
 .btn-ghost:hover {
-  border-color: #00ffaa;
-  color: #00ffaa;
+  border-color: #ffaa00;
+  color: #ffaa00;
 }
 
 /* ---- Toggle mode ---- */
@@ -167,51 +164,25 @@ canvas {
 
 .toggle.active {
   background: #00ffaa;
-  color: #050510;
+  color: #040410;
 }
 
 /* ---- Infos ---- */
-.info {
-  font-size: 0.9rem;
-  color: #444;
-}
+.info { font-size: 0.9rem; color: #444; }
+.info span { color: #ffaa00; }
 
-.info span {
-  color: #00ffaa;
-}
+.hint { font-size: 0.75rem; color: #333; letter-spacing: 1px; }
 
-.hint {
-  font-size: 0.75rem;
-  color: #333;
-  letter-spacing: 1px;
-}
+.final { font-size: 1.6rem; font-weight: 700; color: #fff; }
+.final span { color: #ffaa00; }
 
-.final {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.final span {
-  color: #00ffaa;
-}
-
-.final.small {
-  font-size: 1rem;
-  color: #666;
-  margin-top: -10px;
-}
-
-.final.small span {
-  color: #ffaa00;
-}
+.final.small { font-size: 1rem; color: #666; margin-top: -10px; }
+.final.small span { color: #00ffaa; }
 
 /* ---- HUD ---- */
 .hud {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   z-index: 5;
   display: flex;
   justify-content: space-between;
@@ -224,13 +195,8 @@ canvas {
   color: #555;
 }
 
-.hud.hidden {
-  display: none;
-}
-
-.hud span {
-  color: #00ffaa;
-}
+.hud.hidden { display: none; }
+.hud span { color: #ffaa00; }
 
 .hud-center {
   color: #333;
@@ -240,8 +206,8 @@ canvas {
 
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
-  .neon-title { font-size: 2.4rem; letter-spacing: 4px; }
-  .panel { padding: 32px 28px; gap: 16px; }
+  .neon-title { font-size: 2.8rem; letter-spacing: 6px; }
+  .panel { padding: 32px 24px; gap: 16px; }
   .btn-neon { padding: 13px 36px; font-size: 1rem; }
   .hud { padding: 10px 16px; font-size: 0.85rem; }
 }
