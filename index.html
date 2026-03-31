@@ -3,57 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snake Arcade</title>
+  <title>Snake 3D — Neon Arcade</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
   <!-- Menu d'accueil -->
-  <div id="menu" class="screen">
-    <h1 class="title">SNAKE<span class="accent">ARCADE</span></h1>
-    <div class="subtitle">Un classique revisité</div>
-    <div class="menu-options">
-      <div class="option-group">
+  <div id="menu" class="overlay">
+    <div class="panel">
+      <h1 class="neon-title">SNAKE<span class="accent">3D</span></h1>
+      <p class="tagline">NEON ARCADE EDITION</p>
+      <div class="option-block">
         <label>Mode de jeu</label>
-        <div class="toggle-group">
-          <button id="btn-walls" class="toggle active" data-mode="walls">Avec murs</button>
-          <button id="btn-nowalls" class="toggle" data-mode="nowalls">Sans murs</button>
+        <div class="toggle-row">
+          <button class="toggle active" id="btn-walls" data-mode="walls">Murs</button>
+          <button class="toggle" id="btn-nowalls" data-mode="nowalls">Sans murs</button>
         </div>
       </div>
-    </div>
-    <button id="btn-play" class="btn-primary">JOUER</button>
-    <div class="best-score-display">Meilleur score : <span id="menu-best">0</span></div>
-    <div class="controls-hint">
-      <span>&#8592; &#8593; &#8595; &#8594; ou ZQSD pour se déplacer</span>
-      <span>ESPACE pour pause</span>
+      <button id="btn-play" class="btn-neon">JOUER</button>
+      <div class="info">Meilleur score : <span id="menu-best">0</span></div>
+      <div class="hint">Flèches / ZQSD &bull; Espace = Pause</div>
     </div>
   </div>
 
-  <!-- Écran de jeu -->
-  <div id="game" class="screen hidden">
-    <div class="hud">
-      <div class="hud-item">Score : <span id="score">0</span></div>
-      <div class="hud-item">Meilleur : <span id="best-score">0</span></div>
-      <div class="hud-item" id="mode-display">Mode : Murs</div>
-    </div>
-    <canvas id="canvas"></canvas>
-    <div id="pause-overlay" class="overlay hidden">
-      <div class="overlay-content">
-        <h2>PAUSE</h2>
-        <button id="btn-resume" class="btn-primary">Reprendre</button>
-        <button id="btn-quit" class="btn-secondary">Menu</button>
-      </div>
+  <!-- HUD en jeu -->
+  <div id="hud" class="hud hidden">
+    <div class="hud-left">SCORE <span id="score">0</span></div>
+    <div class="hud-center" id="hud-mode">MURS</div>
+    <div class="hud-right">BEST <span id="best-score">0</span></div>
+  </div>
+
+  <!-- Overlay pause -->
+  <div id="pause" class="overlay hidden">
+    <div class="panel">
+      <h2 class="neon-sub">PAUSE</h2>
+      <button id="btn-resume" class="btn-neon">Reprendre</button>
+      <button id="btn-quit" class="btn-ghost">Menu</button>
     </div>
   </div>
 
-  <!-- Écran Game Over -->
-  <div id="gameover" class="screen hidden">
-    <h2 class="gameover-title">GAME OVER</h2>
-    <div class="final-score">Score : <span id="final-score">0</span></div>
-    <div class="final-best">Meilleur : <span id="final-best">0</span></div>
-    <button id="btn-replay" class="btn-primary">Rejouer</button>
-    <button id="btn-menu" class="btn-secondary">Menu</button>
+  <!-- Overlay game over -->
+  <div id="gameover" class="overlay hidden">
+    <div class="panel">
+      <h2 class="neon-sub red">GAME OVER</h2>
+      <p class="final">Score : <span id="final-score">0</span></p>
+      <p class="final small">Meilleur : <span id="final-best">0</span></p>
+      <button id="btn-replay" class="btn-neon">Rejouer</button>
+      <button id="btn-menu" class="btn-ghost">Menu</button>
+    </div>
   </div>
 
+  <!-- Three.js depuis CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

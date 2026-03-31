@@ -1,5 +1,5 @@
 /* ========================================
-   Snake Arcade — Style premium arcade
+   Snake 3D Neon Arcade — Styles
    ======================================== */
 
 * {
@@ -9,277 +9,239 @@
 }
 
 body {
-  background: #0a0a0f;
+  background: #050510;
   color: #e0e0e0;
   font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  min-height: 100vh;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+}
+
+canvas {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+/* ---- Overlays ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
+  background: rgba(5, 5, 16, 0.85);
+  backdrop-filter: blur(8px);
 }
 
-/* Écrans */
-.screen {
+.overlay.hidden {
+  display: none;
+}
+
+.panel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 24px;
-  width: 100%;
-  max-width: 700px;
-  padding: 40px 20px;
+  gap: 22px;
+  padding: 48px 56px;
+  background: rgba(15, 15, 30, 0.9);
+  border: 1px solid rgba(0, 255, 170, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 0 60px rgba(0, 255, 170, 0.08);
 }
 
-.hidden {
-  display: none !important;
-}
-
-/* Titre */
-.title {
-  font-size: 3.5rem;
+/* ---- Titre néon ---- */
+.neon-title {
+  font-size: 3.8rem;
   font-weight: 900;
-  letter-spacing: 6px;
-  text-transform: uppercase;
+  letter-spacing: 8px;
   color: #fff;
+  text-shadow: 0 0 10px rgba(0, 255, 170, 0.6), 0 0 40px rgba(0, 255, 170, 0.3);
 }
 
-.accent {
-  color: #00e676;
+.neon-title .accent {
+  color: #00ffaa;
 }
 
-.subtitle {
-  font-size: 1rem;
-  color: #666;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  margin-top: -12px;
+.neon-sub {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
 }
 
-/* Boutons */
-.btn-primary {
-  background: linear-gradient(135deg, #00e676, #00c853);
-  color: #0a0a0f;
+.neon-sub.red {
+  color: #ff2255;
+  text-shadow: 0 0 10px rgba(255, 34, 85, 0.6), 0 0 40px rgba(255, 34, 85, 0.3);
+}
+
+.tagline {
+  font-size: 0.85rem;
+  letter-spacing: 5px;
+  color: #555;
+  margin-top: -10px;
+}
+
+/* ---- Boutons ---- */
+.btn-neon {
+  background: linear-gradient(135deg, #00ffaa, #00cc88);
+  color: #050510;
   border: none;
-  padding: 16px 48px;
-  font-size: 1.2rem;
-  font-weight: 700;
+  padding: 15px 50px;
+  font-size: 1.15rem;
+  font-weight: 800;
   letter-spacing: 3px;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
   text-transform: uppercase;
+  transition: transform 0.12s, box-shadow 0.12s;
 }
 
-.btn-primary:hover {
+.btn-neon:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 230, 118, 0.3);
+  box-shadow: 0 6px 30px rgba(0, 255, 170, 0.35);
 }
 
-.btn-primary:active {
+.btn-neon:active {
   transform: translateY(0);
 }
 
-.btn-secondary {
+.btn-ghost {
   background: transparent;
-  color: #888;
-  border: 2px solid #333;
-  padding: 12px 36px;
-  font-size: 1rem;
-  font-weight: 600;
+  color: #666;
+  border: 2px solid #2a2a3a;
+  padding: 12px 40px;
+  font-size: 0.95rem;
+  font-weight: 700;
   letter-spacing: 2px;
   border-radius: 8px;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
   text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s;
 }
 
-.btn-secondary:hover {
-  border-color: #00e676;
-  color: #00e676;
+.btn-ghost:hover {
+  border-color: #00ffaa;
+  color: #00ffaa;
 }
 
-/* Toggle mode */
-.menu-options {
+/* ---- Toggle mode ---- */
+.option-block {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
 }
 
-.option-group label {
-  display: block;
-  font-size: 0.85rem;
-  color: #555;
-  letter-spacing: 2px;
+.option-block label {
+  font-size: 0.75rem;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  margin-bottom: 8px;
-  text-align: center;
+  color: #444;
 }
 
-.toggle-group {
+.toggle-row {
   display: flex;
-  gap: 4px;
-  background: #151520;
+  background: #0a0a1a;
   border-radius: 8px;
-  padding: 4px;
+  padding: 3px;
+  gap: 3px;
 }
 
 .toggle {
   background: transparent;
-  color: #666;
+  color: #555;
   border: none;
   padding: 10px 24px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
-}
-
-.toggle.active {
-  background: #00e676;
-  color: #0a0a0f;
-}
-
-/* Infos menu */
-.best-score-display {
-  font-size: 1rem;
-  color: #555;
-}
-
-.controls-hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: #444;
-  margin-top: 12px;
-}
-
-/* HUD en jeu */
-.hud {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 600px;
-  padding: 12px 0;
-  font-size: 1rem;
-  font-weight: 600;
   letter-spacing: 1px;
 }
 
-.hud-item {
-  color: #888;
+.toggle.active {
+  background: #00ffaa;
+  color: #050510;
 }
 
-.hud-item span {
-  color: #00e676;
+/* ---- Infos ---- */
+.info {
+  font-size: 0.9rem;
+  color: #444;
 }
 
-/* Canvas */
-#canvas {
-  border: 2px solid #1a1a2e;
-  border-radius: 8px;
-  background: #0d0d18;
-  display: block;
+.info span {
+  color: #00ffaa;
 }
 
-/* Overlay pause */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-  backdrop-filter: blur(4px);
+.hint {
+  font-size: 0.75rem;
+  color: #333;
+  letter-spacing: 1px;
 }
 
-.overlay-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.overlay-content h2 {
-  font-size: 2.5rem;
-  font-weight: 900;
-  letter-spacing: 8px;
-  color: #fff;
-}
-
-/* Game Over */
-.gameover-title {
-  font-size: 3rem;
-  font-weight: 900;
-  letter-spacing: 6px;
-  color: #ff1744;
-}
-
-.final-score {
-  font-size: 1.8rem;
+.final {
+  font-size: 1.6rem;
   font-weight: 700;
   color: #fff;
 }
 
-.final-score span {
-  color: #00e676;
+.final span {
+  color: #00ffaa;
 }
 
-.final-best {
+.final.small {
   font-size: 1rem;
   color: #666;
+  margin-top: -10px;
 }
 
-.final-best span {
-  color: #ffab00;
+.final.small span {
+  color: #ffaa00;
 }
 
-/* Animation flash quand on mange un bonus */
-@keyframes flash {
-  0% { box-shadow: 0 0 40px rgba(0, 230, 118, 0.6); }
-  100% { box-shadow: none; }
+/* ---- HUD ---- */
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  pointer-events: none;
+  color: #555;
 }
 
-#canvas.flash {
-  animation: flash 0.3s ease-out;
+.hud.hidden {
+  display: none;
 }
 
-@keyframes flash-gold {
-  0% { box-shadow: 0 0 50px rgba(255, 171, 0, 0.7); }
-  100% { box-shadow: none; }
+.hud span {
+  color: #00ffaa;
 }
 
-#canvas.flash-gold {
-  animation: flash-gold 0.4s ease-out;
+.hud-center {
+  color: #333;
+  font-size: 0.8rem;
+  letter-spacing: 4px;
 }
 
-@keyframes flash-purple {
-  0% { box-shadow: 0 0 50px rgba(213, 0, 249, 0.7); }
-  100% { box-shadow: none; }
-}
-
-#canvas.flash-purple {
-  animation: flash-purple 0.4s ease-out;
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-  .title {
-    font-size: 2.2rem;
-    letter-spacing: 3px;
-  }
-
-  .hud {
-    font-size: 0.85rem;
-    padding: 8px 4px;
-  }
-
-  .btn-primary {
-    padding: 14px 36px;
-    font-size: 1rem;
-  }
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+  .neon-title { font-size: 2.4rem; letter-spacing: 4px; }
+  .panel { padding: 32px 28px; gap: 16px; }
+  .btn-neon { padding: 13px 36px; font-size: 1rem; }
+  .hud { padding: 10px 16px; font-size: 0.85rem; }
 }

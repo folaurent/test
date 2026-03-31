@@ -1,450 +1,687 @@
 // ========================================
-// Snake Arcade — Jeu Snake moderne
+// Snake 3D — Neon Arcade Edition
+// Three.js + Vanilla JS
 // ========================================
 
 (() => {
   "use strict";
 
-  // ---- Éléments DOM ----
-  const menuScreen = document.getElementById("menu");
-  const gameScreen = document.getElementById("game");
-  const gameoverScreen = document.getElementById("gameover");
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  const pauseOverlay = document.getElementById("pause-overlay");
+  // ============================================================
+  //  CONSTANTES & CONFIGURATION
+  // ============================================================
 
-  const scoreEl = document.getElementById("score");
-  const bestScoreEl = document.getElementById("best-score");
-  const menuBestEl = document.getElementById("menu-best");
-  const finalScoreEl = document.getElementById("final-score");
-  const finalBestEl = document.getElementById("final-best");
-  const modeDisplay = document.getElementById("mode-display");
+  const GRID = 20;                  // Taille de la grille (20x20)
+  const CELL = 1;                   // Taille d'une cellule en unités 3D
+  const BASE_INTERVAL = 160;        // Intervalle initial (ms)
+  const MIN_INTERVAL = 55;          // Intervalle minimal (vitesse max)
+  const SPEED_STEP = 3;             // Réduction d'intervalle par fruit
 
-  const btnPlay = document.getElementById("btn-play");
-  const btnReplay = document.getElementById("btn-replay");
-  const btnMenu = document.getElementById("btn-menu");
-  const btnResume = document.getElementById("btn-resume");
-  const btnQuit = document.getElementById("btn-quit");
-  const btnWalls = document.getElementById("btn-walls");
-  const btnNoWalls = document.getElementById("btn-nowalls");
-
-  // ---- Configuration ----
-  const GRID_SIZE = 20; // Nombre de cellules par côté
-  const BASE_SPEED = 150; // Intervalle initial en ms
-  const MIN_SPEED = 60; // Vitesse max (intervalle min)
-  const SPEED_INCREMENT = 3; // Réduction d'intervalle par fruit mangé
-
-  // Types de bonus
-  const BONUS_TYPES = {
-    normal: { color: "#00e676", points: 1, flash: "flash" },
-    gold: { color: "#ffab00", points: 3, flash: "flash-gold" },
-    purple: { color: "#d500f9", points: 5, flash: "flash-purple" },
+  // Types de bonus : couleur, points, taille de l'effet
+  const FOOD_TYPES = {
+    normal:  { color: 0x00ffaa, emissive: 0x00ffaa, points: 1, label: "normal" },
+    gold:    { color: 0xffaa00, emissive: 0xffaa00, points: 3, label: "gold" },
+    mega:    { color: 0xdd00ff, emissive: 0xdd00ff, points: 5, label: "mega" },
   };
 
-  // ---- État du jeu ----
-  let cellSize, canvasSize;
-  let snake, direction, nextDirection;
-  let food, foodType;
-  let score, bestScore, speed;
-  let gameLoop, paused, running;
+  // ============================================================
+  //  ÉLÉMENTS DOM
+  // ============================================================
+
+  const $menu     = document.getElementById("menu");
+  const $hud      = document.getElementById("hud");
+  const $pause    = document.getElementById("pause");
+  const $gameover = document.getElementById("gameover");
+
+  const $score      = document.getElementById("score");
+  const $bestScore  = document.getElementById("best-score");
+  const $menuBest   = document.getElementById("menu-best");
+  const $finalScore = document.getElementById("final-score");
+  const $finalBest  = document.getElementById("final-best");
+  const $hudMode    = document.getElementById("hud-mode");
+
+  const $btnPlay    = document.getElementById("btn-play");
+  const $btnResume  = document.getElementById("btn-resume");
+  const $btnQuit    = document.getElementById("btn-quit");
+  const $btnReplay  = document.getElementById("btn-replay");
+  const $btnMenu    = document.getElementById("btn-menu");
+  const $btnWalls   = document.getElementById("btn-walls");
+  const $btnNoWalls = document.getElementById("btn-nowalls");
+
+  // ============================================================
+  //  ÉTAT DU JEU
+  // ============================================================
+
   let wallMode = true;
+  let score = 0;
+  let bestScore = 0;
+  let interval = BASE_INTERVAL;
+  let paused = false;
+  let running = false;
+  let lastTick = 0;
+  let elapsed = 0;
+
+  // Serpent : tableau de {x, y} (coordonnées grille)
+  let snake = [];
+  let dir = { x: 1, y: 0 };
+  let nextDir = { x: 1, y: 0 };
+
+  // Nourriture
+  let food = { x: 0, y: 0 };
+  let foodKey = "normal";
+
+  // Particules d'effet
   let particles = [];
 
-  // ---- Initialisation du canvas ----
-  function resizeCanvas() {
-    const maxSize = Math.min(window.innerWidth - 40, 600);
-    canvasSize = Math.floor(maxSize / GRID_SIZE) * GRID_SIZE;
-    cellSize = canvasSize / GRID_SIZE;
-    canvas.width = canvasSize;
-    canvas.height = canvasSize;
-  }
+  // ============================================================
+  //  THREE.JS — SCÈNE
+  // ============================================================
 
-  // ---- Gestion des écrans ----
-  function showScreen(screen) {
-    [menuScreen, gameScreen, gameoverScreen].forEach((s) => s.classList.add("hidden"));
-    screen.classList.remove("hidden");
-  }
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x050510, 0.025);
 
-  // ---- Meilleur score (localStorage) ----
-  function loadBestScore() {
-    bestScore = parseInt(localStorage.getItem("snake-best") || "0", 10);
-    menuBestEl.textContent = bestScore;
-    bestScoreEl.textContent = bestScore;
-  }
+  // Caméra perspective avec vue isométrique
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(10, 22, 22);
+  camera.lookAt(GRID / 2, 0, GRID / 2);
 
-  function saveBestScore() {
-    if (score > bestScore) {
-      bestScore = score;
-      localStorage.setItem("snake-best", bestScore);
+  // Position cible pour la caméra dynamique
+  let cameraTarget = new THREE.Vector3(GRID / 2, 0, GRID / 2);
+
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.setClearColor(0x050510);
+  document.body.prepend(renderer.domElement);
+
+  // ---- Lumières ----
+  const ambientLight = new THREE.AmbientLight(0x222244, 0.6);
+  scene.add(ambientLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  dirLight.position.set(15, 30, 20);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.set(1024, 1024);
+  dirLight.shadow.camera.near = 1;
+  dirLight.shadow.camera.far = 80;
+  dirLight.shadow.camera.left = -25;
+  dirLight.shadow.camera.right = 25;
+  dirLight.shadow.camera.top = 25;
+  dirLight.shadow.camera.bottom = -25;
+  scene.add(dirLight);
+
+  // Point light néon central
+  const neonLight = new THREE.PointLight(0x00ffaa, 1.2, 40);
+  neonLight.position.set(GRID / 2, 8, GRID / 2);
+  scene.add(neonLight);
+
+  // ---- Sol / Grille ----
+  function createFloor() {
+    // Plan sombre sous la grille
+    const floorGeo = new THREE.PlaneGeometry(GRID + 4, GRID + 4);
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: 0x080818,
+      roughness: 0.9,
+      metalness: 0.1,
+    });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(GRID / 2 - 0.5, -0.05, GRID / 2 - 0.5);
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Lignes de grille néon
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x00ffaa, transparent: true, opacity: 0.08 });
+    for (let i = 0; i <= GRID; i++) {
+      // Lignes X
+      const gx = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(i - 0.5, 0, -0.5),
+        new THREE.Vector3(i - 0.5, 0, GRID - 0.5),
+      ]);
+      scene.add(new THREE.Line(gx, lineMat));
+      // Lignes Z
+      const gz = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-0.5, 0, i - 0.5),
+        new THREE.Vector3(GRID - 0.5, 0, i - 0.5),
+      ]);
+      scene.add(new THREE.Line(gz, lineMat));
     }
+
+    // Bordure de la grille (toujours visible, rouge en mode murs)
+    const borderMat = new THREE.LineBasicMaterial({ color: 0x00ffaa, transparent: true, opacity: 0.25 });
+    const borderGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-0.5, 0.01, -0.5),
+      new THREE.Vector3(GRID - 0.5, 0.01, -0.5),
+      new THREE.Vector3(GRID - 0.5, 0.01, GRID - 0.5),
+      new THREE.Vector3(-0.5, 0.01, GRID - 0.5),
+      new THREE.Vector3(-0.5, 0.01, -0.5),
+    ]);
+    const borderLine = new THREE.Line(borderGeo, borderMat);
+    borderLine.name = "border";
+    scene.add(borderLine);
   }
+  createFloor();
 
-  // ---- Génération de nourriture ----
-  function randomCell() {
-    return Math.floor(Math.random() * GRID_SIZE);
-  }
+  // ---- Murs 3D (optionnels) ----
+  let wallMeshes = [];
 
-  function spawnFood() {
-    // Position libre (pas sur le serpent)
-    let pos;
-    do {
-      pos = { x: randomCell(), y: randomCell() };
-    } while (snake.some((s) => s.x === pos.x && s.y === pos.y));
+  function createWalls() {
+    removeWalls();
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: 0xff2255,
+      emissive: 0xff2255,
+      emissiveIntensity: 0.3,
+      transparent: true,
+      opacity: 0.35,
+      roughness: 0.5,
+    });
+    const wallH = 0.6;
+    const thickness = 0.12;
 
-    food = pos;
+    const specs = [
+      { w: GRID + thickness, d: thickness, x: GRID / 2 - 0.5, z: -0.5 - thickness / 2 },
+      { w: GRID + thickness, d: thickness, x: GRID / 2 - 0.5, z: GRID - 0.5 + thickness / 2 },
+      { w: thickness, d: GRID + thickness, x: -0.5 - thickness / 2, z: GRID / 2 - 0.5 },
+      { w: thickness, d: GRID + thickness, x: GRID - 0.5 + thickness / 2, z: GRID / 2 - 0.5 },
+    ];
 
-    // Type de bonus aléatoire
-    const roll = Math.random();
-    if (roll < 0.1) foodType = "purple";
-    else if (roll < 0.3) foodType = "gold";
-    else foodType = "normal";
-  }
-
-  // ---- Particules d'effet ----
-  function emitParticles(x, y, color) {
-    for (let i = 0; i < 8; i++) {
-      particles.push({
-        x: x * cellSize + cellSize / 2,
-        y: y * cellSize + cellSize / 2,
-        vx: (Math.random() - 0.5) * 6,
-        vy: (Math.random() - 0.5) * 6,
-        life: 1,
-        color,
-      });
-    }
-  }
-
-  function updateParticles() {
-    particles = particles.filter((p) => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= 0.04;
-      return p.life > 0;
+    specs.forEach((s) => {
+      const geo = new THREE.BoxGeometry(s.w, wallH, s.d);
+      const mesh = new THREE.Mesh(geo, wallMat);
+      mesh.position.set(s.x, wallH / 2, s.z);
+      scene.add(mesh);
+      wallMeshes.push(mesh);
     });
   }
 
-  function drawParticles() {
-    particles.forEach((p) => {
-      ctx.globalAlpha = p.life;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 3 * p.life, 0, Math.PI * 2);
-      ctx.fill();
+  function removeWalls() {
+    wallMeshes.forEach((m) => scene.remove(m));
+    wallMeshes = [];
+  }
+
+  // ============================================================
+  //  SERPENT 3D
+  // ============================================================
+
+  let snakeMeshes = [];
+  const snakeGeo = new THREE.BoxGeometry(0.85, 0.45, 0.85, 1, 1, 1);
+
+  function getSnakeMaterial(index, total) {
+    const ratio = 1 - index / total;
+    const g = Math.floor(200 + 55 * ratio);
+    const b = Math.floor(120 + 50 * ratio);
+    const color = new THREE.Color(`rgb(0, ${g}, ${b})`);
+    const emissiveIntensity = index === 0 ? 0.7 : 0.15 + 0.3 * ratio;
+    return new THREE.MeshStandardMaterial({
+      color,
+      emissive: 0x00ffaa,
+      emissiveIntensity,
+      roughness: 0.3,
+      metalness: 0.5,
     });
-    ctx.globalAlpha = 1;
   }
 
-  // ---- Flash du canvas ----
-  function flashCanvas(className) {
-    canvas.classList.remove("flash", "flash-gold", "flash-purple");
-    // Force reflow pour relancer l'animation
-    void canvas.offsetWidth;
-    canvas.classList.add(className);
-    setTimeout(() => canvas.classList.remove(className), 400);
+  function rebuildSnakeMeshes() {
+    // Supprimer les anciens meshes
+    snakeMeshes.forEach((m) => scene.remove(m));
+    snakeMeshes = [];
+
+    snake.forEach((seg, i) => {
+      const mat = getSnakeMaterial(i, snake.length);
+      const mesh = new THREE.Mesh(snakeGeo, mat);
+      mesh.position.set(seg.x, 0.225, seg.y);
+      mesh.castShadow = true;
+      scene.add(mesh);
+      snakeMeshes.push(mesh);
+    });
   }
 
-  // ---- Dessin ----
-  function drawGrid() {
-    ctx.fillStyle = "#0d0d18";
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
-
-    // Grille subtile
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= GRID_SIZE; i++) {
-      const pos = i * cellSize;
-      ctx.beginPath();
-      ctx.moveTo(pos, 0);
-      ctx.lineTo(pos, canvasSize);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(0, pos);
-      ctx.lineTo(canvasSize, pos);
-      ctx.stroke();
+  function updateSnakeMeshes() {
+    // Ajouter les meshes manquants
+    while (snakeMeshes.length < snake.length) {
+      const i = snakeMeshes.length;
+      const mat = getSnakeMaterial(i, snake.length);
+      const mesh = new THREE.Mesh(snakeGeo, mat);
+      mesh.castShadow = true;
+      scene.add(mesh);
+      snakeMeshes.push(mesh);
     }
-  }
-
-  function drawSnake() {
-    snake.forEach((segment, i) => {
-      const x = segment.x * cellSize;
-      const y = segment.y * cellSize;
-      const pad = 1;
-
-      // Dégradé de la tête à la queue
+    // Supprimer les meshes en trop
+    while (snakeMeshes.length > snake.length) {
+      const m = snakeMeshes.pop();
+      scene.remove(m);
+    }
+    // Mettre à jour positions et matériaux
+    snake.forEach((seg, i) => {
+      const mesh = snakeMeshes[i];
+      mesh.position.set(seg.x, 0.225, seg.y);
+      // Mettre à jour la couleur
       const ratio = 1 - i / snake.length;
-      const g = Math.floor(180 + 50 * ratio);
-      ctx.fillStyle = i === 0 ? "#00e676" : `rgb(0, ${g}, ${Math.floor(60 + 40 * ratio)})`;
+      const g = Math.floor(200 + 55 * ratio);
+      const b = Math.floor(120 + 50 * ratio);
+      mesh.material.color.setRGB(0, g / 255, b / 255);
+      mesh.material.emissiveIntensity = i === 0 ? 0.7 : 0.15 + 0.3 * ratio;
 
-      // Coins arrondis pour un look moderne
-      const r = cellSize * 0.2;
-      const w = cellSize - pad * 2;
-      ctx.beginPath();
-      ctx.moveTo(x + pad + r, y + pad);
-      ctx.lineTo(x + pad + w - r, y + pad);
-      ctx.quadraticCurveTo(x + pad + w, y + pad, x + pad + w, y + pad + r);
-      ctx.lineTo(x + pad + w, y + pad + w - r);
-      ctx.quadraticCurveTo(x + pad + w, y + pad + w, x + pad + w - r, y + pad + w);
-      ctx.lineTo(x + pad + r, y + pad + w);
-      ctx.quadraticCurveTo(x + pad, y + pad + w, x + pad, y + pad + w - r);
-      ctx.lineTo(x + pad, y + pad + r);
-      ctx.quadraticCurveTo(x + pad, y + pad, x + pad + r, y + pad);
-      ctx.fill();
-
-      // Yeux sur la tête
+      // Hauteur animée pour la tête
       if (i === 0) {
-        ctx.fillStyle = "#0a0a0f";
-        const eyeSize = cellSize * 0.15;
-        const cx = x + cellSize / 2;
-        const cy = y + cellSize / 2;
-        let ex1, ey1, ex2, ey2;
-
-        if (direction.x === 1) { ex1 = cx + 4; ey1 = cy - 4; ex2 = cx + 4; ey2 = cy + 4; }
-        else if (direction.x === -1) { ex1 = cx - 4; ey1 = cy - 4; ex2 = cx - 4; ey2 = cy + 4; }
-        else if (direction.y === -1) { ex1 = cx - 4; ey1 = cy - 4; ex2 = cx + 4; ey2 = cy - 4; }
-        else { ex1 = cx - 4; ey1 = cy + 4; ex2 = cx + 4; ey2 = cy + 4; }
-
-        ctx.beginPath();
-        ctx.arc(ex1, ey1, eyeSize, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(ex2, ey2, eyeSize, 0, Math.PI * 2);
-        ctx.fill();
+        mesh.position.y = 0.3;
+        mesh.scale.set(1.05, 1.15, 1.05);
+      } else {
+        mesh.scale.set(1, 1, 1);
       }
     });
   }
 
-  function drawFood() {
-    const bonus = BONUS_TYPES[foodType];
-    const x = food.x * cellSize + cellSize / 2;
-    const y = food.y * cellSize + cellSize / 2;
-    const radius = cellSize * 0.35;
+  // ============================================================
+  //  NOURRITURE 3D
+  // ============================================================
 
-    // Lueur
-    const glow = ctx.createRadialGradient(x, y, radius * 0.3, x, y, radius * 2.5);
-    glow.addColorStop(0, bonus.color + "40");
-    glow.addColorStop(1, "transparent");
-    ctx.fillStyle = glow;
-    ctx.fillRect(
-      food.x * cellSize - cellSize,
-      food.y * cellSize - cellSize,
-      cellSize * 3,
-      cellSize * 3
-    );
+  let foodMesh = null;
+  let foodGlow = null;
 
-    // Fruit
-    ctx.fillStyle = bonus.color;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
+  function createFoodMesh() {
+    removeFoodMesh();
+    const ft = FOOD_TYPES[foodKey];
 
-    // Reflet
-    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.beginPath();
-    ctx.arc(x - radius * 0.25, y - radius * 0.25, radius * 0.3, 0, Math.PI * 2);
-    ctx.fill();
+    // Sphère principale
+    const geo = new THREE.SphereGeometry(0.35, 16, 16);
+    const mat = new THREE.MeshStandardMaterial({
+      color: ft.color,
+      emissive: ft.emissive,
+      emissiveIntensity: 0.8,
+      roughness: 0.2,
+      metalness: 0.6,
+    });
+    foodMesh = new THREE.Mesh(geo, mat);
+    foodMesh.position.set(food.x, 0.55, food.y);
+    foodMesh.castShadow = true;
+    scene.add(foodMesh);
+
+    // Point light pour l'aura
+    foodGlow = new THREE.PointLight(ft.color, 1.5, 5);
+    foodGlow.position.copy(foodMesh.position);
+    foodGlow.position.y = 1;
+    scene.add(foodGlow);
   }
 
-  function drawWalls() {
-    if (!wallMode) return;
-    ctx.strokeStyle = "#ff1744";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(1.5, 1.5, canvasSize - 3, canvasSize - 3);
+  function removeFoodMesh() {
+    if (foodMesh) { scene.remove(foodMesh); foodMesh = null; }
+    if (foodGlow) { scene.remove(foodGlow); foodGlow = null; }
   }
 
-  function draw() {
-    drawGrid();
-    drawWalls();
-    drawFood();
-    drawSnake();
-    updateParticles();
-    drawParticles();
+  function animateFood(time) {
+    if (!foodMesh) return;
+    // Flottement vertical
+    foodMesh.position.y = 0.55 + Math.sin(time * 3) * 0.15;
+    foodMesh.rotation.y = time * 1.5;
+    if (foodGlow) foodGlow.position.y = foodMesh.position.y + 0.5;
   }
 
-  // ---- Logique du jeu ----
+  // ============================================================
+  //  PARTICULES D'EFFET
+  // ============================================================
+
+  function emitParticles(x, z, color, count) {
+    for (let i = 0; i < count; i++) {
+      const geo = new THREE.SphereGeometry(0.08, 6, 6);
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, 0.5, z);
+      scene.add(mesh);
+      particles.push({
+        mesh,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: Math.random() * 0.2 + 0.1,
+        vz: (Math.random() - 0.5) * 0.3,
+        life: 1,
+      });
+    }
+  }
+
+  function updateParticles(dt) {
+    particles = particles.filter((p) => {
+      p.mesh.position.x += p.vx;
+      p.mesh.position.y += p.vy;
+      p.mesh.position.z += p.vz;
+      p.vy -= 0.008; // gravité
+      p.life -= dt * 1.8;
+      p.mesh.material.opacity = Math.max(0, p.life);
+      p.mesh.scale.setScalar(p.life);
+      if (p.life <= 0) {
+        scene.remove(p.mesh);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  // ============================================================
+  //  CAMÉRA DYNAMIQUE
+  // ============================================================
+
+  function updateCamera() {
+    if (snake.length === 0) return;
+    const head = snake[0];
+    // Le point de regard suit doucement la tête
+    const targetX = head.x;
+    const targetZ = head.y;
+    cameraTarget.x += (targetX - cameraTarget.x) * 0.05;
+    cameraTarget.z += (targetZ - cameraTarget.z) * 0.05;
+
+    // La caméra reste en position isométrique mais suit légèrement
+    const camX = cameraTarget.x + 2;
+    const camZ = cameraTarget.z + 14;
+    camera.position.x += (camX - camera.position.x) * 0.03;
+    camera.position.z += (camZ - camera.position.z) * 0.03;
+    camera.lookAt(cameraTarget.x, 0, cameraTarget.z);
+  }
+
+  function resetCamera() {
+    camera.position.set(10, 22, 22);
+    cameraTarget.set(GRID / 2, 0, GRID / 2);
+    camera.lookAt(cameraTarget);
+  }
+
+  // ============================================================
+  //  LOGIQUE DU JEU
+  // ============================================================
+
+  function loadBest() {
+    bestScore = parseInt(localStorage.getItem("snake3d-best") || "0", 10);
+    $menuBest.textContent = bestScore;
+    $bestScore.textContent = bestScore;
+  }
+
+  function saveBest() {
+    if (score > bestScore) {
+      bestScore = score;
+      localStorage.setItem("snake3d-best", bestScore);
+    }
+  }
+
+  function randomCell() {
+    return Math.floor(Math.random() * GRID);
+  }
+
+  function spawnFood() {
+    let pos;
+    do {
+      pos = { x: randomCell(), y: randomCell() };
+    } while (snake.some((s) => s.x === pos.x && s.y === pos.y));
+    food = pos;
+
+    const roll = Math.random();
+    if (roll < 0.08) foodKey = "mega";
+    else if (roll < 0.25) foodKey = "gold";
+    else foodKey = "normal";
+
+    createFoodMesh();
+  }
+
   function initGame() {
-    resizeCanvas();
-    const mid = Math.floor(GRID_SIZE / 2);
+    score = 0;
+    interval = BASE_INTERVAL;
+    paused = false;
+    running = true;
+    elapsed = 0;
+    lastTick = 0;
+    particles.forEach((p) => scene.remove(p.mesh));
+    particles = [];
+
+    const mid = Math.floor(GRID / 2);
     snake = [
       { x: mid, y: mid },
       { x: mid - 1, y: mid },
       { x: mid - 2, y: mid },
     ];
-    direction = { x: 1, y: 0 };
-    nextDirection = { x: 1, y: 0 };
-    score = 0;
-    speed = BASE_SPEED;
-    paused = false;
-    running = true;
-    particles = [];
+    dir = { x: 1, y: 0 };
+    nextDir = { x: 1, y: 0 };
 
-    scoreEl.textContent = score;
-    loadBestScore();
-    modeDisplay.textContent = wallMode ? "Mode : Murs" : "Mode : Sans murs";
+    $score.textContent = 0;
+    loadBest();
+    $hudMode.textContent = wallMode ? "MURS" : "SANS MURS";
 
+    if (wallMode) createWalls();
+    else removeWalls();
+
+    rebuildSnakeMeshes();
     spawnFood();
-    draw();
+    resetCamera();
   }
 
-  function move() {
-    direction = { ...nextDirection };
-    const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+  function tick() {
+    dir = { ...nextDir };
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
     // Gestion des bords
     if (wallMode) {
-      if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
-        gameOver();
-        return;
+      if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) {
+        return gameOver();
       }
     } else {
-      // Traversée des murs
-      head.x = (head.x + GRID_SIZE) % GRID_SIZE;
-      head.y = (head.y + GRID_SIZE) % GRID_SIZE;
+      head.x = (head.x + GRID) % GRID;
+      head.y = (head.y + GRID) % GRID;
     }
 
     // Collision avec soi-même
     if (snake.some((s) => s.x === head.x && s.y === head.y)) {
-      gameOver();
-      return;
+      return gameOver();
     }
 
     snake.unshift(head);
 
-    // Manger la nourriture
+    // Manger
     if (head.x === food.x && head.y === food.y) {
-      const bonus = BONUS_TYPES[foodType];
-      score += bonus.points;
-      scoreEl.textContent = score;
+      const ft = FOOD_TYPES[foodKey];
+      score += ft.points;
+      $score.textContent = score;
 
-      // Effets visuels
-      emitParticles(food.x, food.y, bonus.color);
-      flashCanvas(bonus.flash);
+      // Particules
+      emitParticles(food.x, food.y, ft.color, 12 + ft.points * 3);
 
-      // Accélération progressive
-      speed = Math.max(MIN_SPEED, speed - SPEED_INCREMENT * bonus.points);
+      // Flash sur la neon light
+      neonLight.color.set(ft.color);
+      neonLight.intensity = 3;
+
+      // Accélération
+      interval = Math.max(MIN_INTERVAL, interval - SPEED_STEP * ft.points);
 
       spawnFood();
-      restartLoop();
     } else {
       snake.pop();
     }
 
-    draw();
-  }
-
-  function restartLoop() {
-    clearInterval(gameLoop);
-    gameLoop = setInterval(move, speed);
+    updateSnakeMeshes();
   }
 
   function gameOver() {
     running = false;
-    clearInterval(gameLoop);
-    saveBestScore();
-    finalScoreEl.textContent = score;
-    finalBestEl.textContent = bestScore;
-    showScreen(gameoverScreen);
+    saveBest();
+    $finalScore.textContent = score;
+    $finalBest.textContent = bestScore;
+    showScreen("gameover");
   }
 
   function togglePause() {
     if (!running) return;
     paused = !paused;
-    if (paused) {
-      clearInterval(gameLoop);
-      pauseOverlay.classList.remove("hidden");
-    } else {
-      pauseOverlay.classList.add("hidden");
-      restartLoop();
+    if (paused) showScreen("pause");
+    else showScreen("game");
+  }
+
+  // ============================================================
+  //  NAVIGATION ÉCRANS
+  // ============================================================
+
+  function showScreen(name) {
+    $menu.classList.add("hidden");
+    $hud.classList.add("hidden");
+    $pause.classList.add("hidden");
+    $gameover.classList.add("hidden");
+
+    switch (name) {
+      case "menu":
+        $menu.classList.remove("hidden");
+        break;
+      case "game":
+        $hud.classList.remove("hidden");
+        break;
+      case "pause":
+        $hud.classList.remove("hidden");
+        $pause.classList.remove("hidden");
+        break;
+      case "gameover":
+        $gameover.classList.remove("hidden");
+        break;
     }
   }
 
-  // ---- Contrôles clavier ----
-  document.addEventListener("keydown", (e) => {
-    if (!running) return;
+  // ============================================================
+  //  CONTRÔLES CLAVIER
+  // ============================================================
 
+  document.addEventListener("keydown", (e) => {
     const key = e.key.toLowerCase();
 
     // Pause
     if (key === " " || key === "escape" || key === "p") {
       e.preventDefault();
-      togglePause();
+      if (running) togglePause();
       return;
     }
 
-    if (paused) return;
+    if (!running || paused) return;
 
-    // Directions (flèches + ZQSD)
     const dirMap = {
-      arrowup: { x: 0, y: -1 },
-      arrowdown: { x: 0, y: 1 },
-      arrowleft: { x: -1, y: 0 },
+      arrowup:    { x: 0, y: -1 },
+      arrowdown:  { x: 0, y: 1 },
+      arrowleft:  { x: -1, y: 0 },
       arrowright: { x: 1, y: 0 },
       z: { x: 0, y: -1 },
+      w: { x: 0, y: -1 },
       s: { x: 0, y: 1 },
       q: { x: -1, y: 0 },
-      d: { x: 1, y: 0 },
-      w: { x: 0, y: -1 },
       a: { x: -1, y: 0 },
+      d: { x: 1, y: 0 },
     };
 
-    const newDir = dirMap[key];
-    if (!newDir) return;
+    const nd = dirMap[key];
+    if (!nd) return;
 
     // Empêcher le demi-tour
-    if (newDir.x !== -direction.x || newDir.y !== -direction.y) {
-      nextDirection = newDir;
+    if (nd.x !== -dir.x || nd.y !== -dir.y) {
+      nextDir = nd;
     }
     e.preventDefault();
   });
 
-  // ---- Événements UI ----
-  btnPlay.addEventListener("click", () => {
-    showScreen(gameScreen);
+  // ============================================================
+  //  ÉVÉNEMENTS UI
+  // ============================================================
+
+  $btnPlay.addEventListener("click", () => {
     initGame();
-    restartLoop();
+    showScreen("game");
   });
 
-  btnReplay.addEventListener("click", () => {
-    showScreen(gameScreen);
+  $btnReplay.addEventListener("click", () => {
     initGame();
-    restartLoop();
+    showScreen("game");
   });
 
-  btnMenu.addEventListener("click", () => {
-    loadBestScore();
-    showScreen(menuScreen);
+  $btnMenu.addEventListener("click", () => {
+    cleanupGame();
+    loadBest();
+    showScreen("menu");
   });
 
-  btnResume.addEventListener("click", togglePause);
+  $btnResume.addEventListener("click", togglePause);
 
-  btnQuit.addEventListener("click", () => {
-    paused = false;
+  $btnQuit.addEventListener("click", () => {
     running = false;
-    clearInterval(gameLoop);
-    pauseOverlay.classList.add("hidden");
-    loadBestScore();
-    showScreen(menuScreen);
+    paused = false;
+    cleanupGame();
+    loadBest();
+    showScreen("menu");
   });
 
-  // Toggle mode murs/sans murs
-  btnWalls.addEventListener("click", () => {
+  $btnWalls.addEventListener("click", () => {
     wallMode = true;
-    btnWalls.classList.add("active");
-    btnNoWalls.classList.remove("active");
+    $btnWalls.classList.add("active");
+    $btnNoWalls.classList.remove("active");
   });
 
-  btnNoWalls.addEventListener("click", () => {
+  $btnNoWalls.addEventListener("click", () => {
     wallMode = false;
-    btnNoWalls.classList.add("active");
-    btnWalls.classList.remove("active");
+    $btnNoWalls.classList.add("active");
+    $btnWalls.classList.remove("active");
   });
 
-  // Redimensionnement
+  function cleanupGame() {
+    snakeMeshes.forEach((m) => scene.remove(m));
+    snakeMeshes = [];
+    removeFoodMesh();
+    removeWalls();
+    particles.forEach((p) => scene.remove(p.mesh));
+    particles = [];
+  }
+
+  // ============================================================
+  //  REDIMENSIONNEMENT
+  // ============================================================
+
   window.addEventListener("resize", () => {
-    resizeCanvas();
-    if (running && !paused) draw();
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  // ---- Démarrage ----
-  resizeCanvas();
-  loadBestScore();
+  // ============================================================
+  //  BOUCLE DE RENDU PRINCIPALE
+  // ============================================================
+
+  let prevTime = 0;
+
+  function animate(time) {
+    requestAnimationFrame(animate);
+
+    const t = time * 0.001; // temps en secondes
+    const dt = Math.min((time - prevTime) * 0.001, 0.1);
+    prevTime = time;
+
+    // Logique de jeu (tick basé sur interval)
+    if (running && !paused) {
+      elapsed += time - (lastTick || time);
+      lastTick = time;
+
+      if (elapsed >= interval) {
+        tick();
+        elapsed = 0;
+      }
+    } else {
+      lastTick = time;
+    }
+
+    // Animations continues
+    animateFood(t);
+    updateParticles(dt);
+    updateCamera();
+
+    // Retour progressif de la lumière néon au vert
+    neonLight.intensity += (1.2 - neonLight.intensity) * 0.04;
+    neonLight.color.lerp(new THREE.Color(0x00ffaa), 0.03);
+
+    renderer.render(scene, camera);
+  }
+
+  // ============================================================
+  //  DÉMARRAGE
+  // ============================================================
+
+  loadBest();
+  showScreen("menu");
+  requestAnimationFrame(animate);
+
 })();
