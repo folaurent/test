@@ -1,0 +1,18 @@
+# WhatsApp Desktop Assistant - Dépendances
+
+# Interface utilisateur
+customtkinter>=5.2.0
+
+# Variables d'environnement
+python-dotenv>=1.0.0
+
+# Automatisation Windows (uniquement sur Windows)
+# pywinauto>=0.6.8  # Décommentez cette ligne sur Windows
+
+# Providers IA (installer selon le provider choisi)
+# openai>=1.0.0     # Pour utiliser OpenAI
+# anthropic>=0.30.0 # Pour utiliser Anthropic Claude
+
+# Tests
+pytest>=7.0.0
+pytest-cov>=4.0.0
