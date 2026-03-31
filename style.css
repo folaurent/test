@@ -1,0 +1,285 @@
+/* ========================================
+   Snake Arcade — Style premium arcade
+   ======================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0a0f;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Écrans */
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 700px;
+  padding: 40px 20px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Titre */
+.title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.accent {
+  color: #00e676;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #666;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: -12px;
+}
+
+/* Boutons */
+.btn-primary {
+  background: linear-gradient(135deg, #00e676, #00c853);
+  color: #0a0a0f;
+  border: none;
+  padding: 16px 48px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-transform: uppercase;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 230, 118, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #888;
+  border: 2px solid #333;
+  padding: 12px 36px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  text-transform: uppercase;
+}
+
+.btn-secondary:hover {
+  border-color: #00e676;
+  color: #00e676;
+}
+
+/* Toggle mode */
+.menu-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.option-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: #555;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.toggle-group {
+  display: flex;
+  gap: 4px;
+  background: #151520;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.toggle {
+  background: transparent;
+  color: #666;
+  border: none;
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.toggle.active {
+  background: #00e676;
+  color: #0a0a0f;
+}
+
+/* Infos menu */
+.best-score-display {
+  font-size: 1rem;
+  color: #555;
+}
+
+.controls-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #444;
+  margin-top: 12px;
+}
+
+/* HUD en jeu */
+.hud {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
+  padding: 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.hud-item {
+  color: #888;
+}
+
+.hud-item span {
+  color: #00e676;
+}
+
+/* Canvas */
+#canvas {
+  border: 2px solid #1a1a2e;
+  border-radius: 8px;
+  background: #0d0d18;
+  display: block;
+}
+
+/* Overlay pause */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.overlay-content h2 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: #fff;
+}
+
+/* Game Over */
+.gameover-title {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: #ff1744;
+}
+
+.final-score {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.final-score span {
+  color: #00e676;
+}
+
+.final-best {
+  font-size: 1rem;
+  color: #666;
+}
+
+.final-best span {
+  color: #ffab00;
+}
+
+/* Animation flash quand on mange un bonus */
+@keyframes flash {
+  0% { box-shadow: 0 0 40px rgba(0, 230, 118, 0.6); }
+  100% { box-shadow: none; }
+}
+
+#canvas.flash {
+  animation: flash 0.3s ease-out;
+}
+
+@keyframes flash-gold {
+  0% { box-shadow: 0 0 50px rgba(255, 171, 0, 0.7); }
+  100% { box-shadow: none; }
+}
+
+#canvas.flash-gold {
+  animation: flash-gold 0.4s ease-out;
+}
+
+@keyframes flash-purple {
+  0% { box-shadow: 0 0 50px rgba(213, 0, 249, 0.7); }
+  100% { box-shadow: none; }
+}
+
+#canvas.flash-purple {
+  animation: flash-purple 0.4s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .title {
+    font-size: 2.2rem;
+    letter-spacing: 3px;
+  }
+
+  .hud {
+    font-size: 0.85rem;
+    padding: 8px 4px;
+  }
+
+  .btn-primary {
+    padding: 14px 36px;
+    font-size: 1rem;
+  }
+}
