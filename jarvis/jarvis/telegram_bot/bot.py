@@ -23,10 +23,14 @@ from aiogram.types import Message
 
 from jarvis.agents.builder import Builder
 from jarvis.agents.jarvis_orchestrator import JarvisOrchestrator, Route
+from jarvis.core.budget import BudgetManager
 from jarvis.core.config import get_settings
 from jarvis.core.scope import ScopeError, ScopeFilter
+from jarvis.models.claude_cli import ClaudeCliBackend
+from jarvis.models.client import AnthropicClient
 from jarvis.observability.audit import audit
 from jarvis.observability.logger import get_logger
+from jarvis.security.injection import InjectionDefense
 from jarvis.telegram_bot.auth import TelegramAuth
 from jarvis.voice.lint import VoiceLint
 
@@ -52,8 +56,16 @@ async def run() -> None:
     auth = TelegramAuth(settings)
     scope = ScopeFilter.from_settings(settings)
     lint = VoiceLint()
-    jarvis = JarvisOrchestrator(scope, bus=None, voice_lint=lint)
+    budget = BudgetManager(settings)
+    injection = InjectionDefense(settings.canary_secret.get_secret_value() or "JARVIS_CANARY")
+    cli_backend = ClaudeCliBackend()
+    llm = AnthropicClient(settings, scope, budget, injection, cli_backend=cli_backend)
+    jarvis = JarvisOrchestrator(scope, bus=None, voice_lint=lint, llm=llm)
     builder = Builder(scope)
+    llm_mode = "claude_cli" if llm.prefers_cli else (
+        "anthropic_sdk" if settings.anthropic_api_key.get_secret_value() else "stub"
+    )
+    logger.info("jarvis.llm_mode", mode=llm_mode)
 
     token = settings.telegram_bot_token.get_secret_value()
     if not token:
@@ -98,7 +110,7 @@ async def run() -> None:
             f"env: `{settings.env}`\n"
             f"dry_run: `{settings.dry_run}`\n"
             f"scope exclus: `{','.join(sorted(settings.excluded_ventures))}`\n"
-            f"Anthropic API: `{'configurée' if settings.anthropic_api_key.get_secret_value() else 'absente (stub mode)'}`\n"
+            f"LLM backend: `{llm_mode}`\n"
             f"Supabase: `non branché (SQLite local)`",
             parse_mode="Markdown",
         )

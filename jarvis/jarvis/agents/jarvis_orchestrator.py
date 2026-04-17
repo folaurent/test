@@ -19,7 +19,8 @@ from typing import Any
 from jarvis.agents.base import AgentBase, AgentCharter, AutonomyLevel
 from jarvis.bus.bus import MessageBus
 from jarvis.bus.schema import BusEvent, BusMessage
-from jarvis.core.scope import ScopeError, ScopeFilter
+from jarvis.core.scope import SCOPE_SYSTEM_PREFIX, ScopeError, ScopeFilter
+from jarvis.models.client import AnthropicClient, LLMBlocked, LLMCall
 from jarvis.observability.audit import audit
 from jarvis.observability.logger import get_logger
 from jarvis.voice.lint import VoiceLint
@@ -122,6 +123,7 @@ class JarvisOrchestrator(AgentBase):
         scope: ScopeFilter,
         bus: MessageBus | None = None,
         voice_lint: VoiceLint | None = None,
+        llm: AnthropicClient | None = None,
     ) -> None:
         super().__init__(
             AgentCharter(
@@ -141,6 +143,7 @@ class JarvisOrchestrator(AgentBase):
         self._scope = scope
         self._bus = bus
         self._lint = voice_lint or VoiceLint()
+        self._llm = llm
 
     # ---------- Router ----------
     async def route(self, text: str) -> RoutedIntent:
@@ -252,7 +255,8 @@ class JarvisOrchestrator(AgentBase):
         plan = await self.plan(intent)
         await self.dispatch(plan)
         aggregation = await self.aggregate(plan, timeout_s=0.01)
-        reply = self._default_reply(intent)
+
+        reply = await self._compose_reply(intent, plan)
         verified = await self.verify(plan, aggregation, reply)
         return {
             "intent": intent.raw,
@@ -261,6 +265,67 @@ class JarvisOrchestrator(AgentBase):
             "steps": [s.__dict__ for s in plan.steps],
             "reply": verified,
         }
+
+    async def _compose_reply(self, intent: RoutedIntent, plan: ExecutionPlan) -> str:
+        """Choisit entre reply canned et reply LLM.
+
+        Règles :
+          - REFUSE / META → canned (déterministe, zéro coût, aligné voice)
+          - CLARIFY / autres routes → LLM si dispo, sinon canned
+        """
+        if intent.route in (Route.REFUSE, Route.META):
+            return self._default_reply(intent)
+        if self._llm is None:
+            return self._default_reply(intent)
+        try:
+            return await self._llm_reply(intent, plan)
+        except LLMBlocked as e:
+            audit("jarvis.llm_blocked", plan_id=plan.plan_id, detail=str(e))
+            return self._default_reply(intent)
+        except Exception as e:
+            audit("jarvis.llm_error", plan_id=plan.plan_id, detail=str(e))
+            logger.exception("jarvis_llm_error")
+            return self._default_reply(intent)
+
+    async def _llm_reply(self, intent: RoutedIntent, plan: ExecutionPlan) -> str:
+        system = (
+            SCOPE_SYSTEM_PREFIX
+            + "\n\n[RÔLE] Tu es Jarvis, assistant de Laurent. Tu parles à Laurent "
+            "en direct, pas à un prospect. Ton sobre, direct, pas d'effet de manche. "
+            "Contractions naturelles. Pas de 'j'espère que tu vas bien', pas de "
+            "'bien cordialement'. Réponds en français. Max 4-6 lignes sauf si on "
+            "te demande du fond.\n\n"
+            f"[ROUTE DÉTECTÉE] {intent.route.value}. Raisonnement : {intent.reasoning}.\n\n"
+            "[LIMITES] Sans clef Anthropic brute + Supabase, tu ne peux pas "
+            "encore exécuter de prospection, envoyer de mails, ni persister en "
+            "base cloud. Si la demande implique ça, dis-le honnêtement et "
+            "propose un premier pas concret."
+        )
+        task_kind_by_route = {
+            Route.CLARIFY: "intent_classification",
+            Route.RESEARCH: "research_summary",
+            Route.BUILDER: "planning",
+            Route.PROSPECTION: "planning",
+            Route.CONVERSATION: "cold_email_draft",
+            Route.COMPLIANCE: "compliance_review",
+            Route.DEV: "code_generation",
+            Route.FINANCE: "planning",
+            Route.COMMS: "cold_email_draft",
+            Route.TRAVEL: "planning",
+            Route.OPS: "planning",
+        }
+        call = LLMCall(
+            task_kind=task_kind_by_route.get(intent.route, "planning"),
+            system=system,
+            user=intent.raw,
+            max_tokens=600,
+            trace_id=plan.plan_id,
+            external_input=False,
+        )
+        resp = await self._llm.call(call)
+        if resp.blocked:
+            return f"[BLOCKED: {resp.blocked}]"
+        return resp.text.strip() or self._default_reply(intent)
 
     def _default_reply(self, intent: RoutedIntent) -> str:
         if intent.route == Route.REFUSE:

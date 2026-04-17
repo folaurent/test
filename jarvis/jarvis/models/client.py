@@ -21,6 +21,7 @@ from jarvis.core.budget import BudgetManager
 from jarvis.core.config import Settings
 from jarvis.core.model_router import ModelChoice, ModelRouter, Tier
 from jarvis.core.scope import ScopeError, ScopeFilter
+from jarvis.models.claude_cli import ClaudeCliBackend
 from jarvis.observability.audit import audit
 from jarvis.security.injection import InjectionDefense
 
@@ -75,6 +76,7 @@ class AnthropicClient:
         injection: InjectionDefense,
         *,
         _anthropic_cls=None,  # injection pour tests
+        cli_backend: ClaudeCliBackend | None = None,
     ) -> None:
         self._s = settings
         self._scope = scope
@@ -82,6 +84,15 @@ class AnthropicClient:
         self._injection = injection
         self._router = ModelRouter(settings)
         self._anthropic_cls = _anthropic_cls  # None en tests → pas d'appel réseau
+        self._cli = cli_backend if cli_backend is not None else ClaudeCliBackend()
+
+    @property
+    def prefers_cli(self) -> bool:
+        """True si on n'a pas de clef API mais le CLI est disponible."""
+        return (
+            not self._s.anthropic_api_key.get_secret_value()
+            and self._cli.available()
+        )
 
     def _estimate_cost(self, tier: Tier, in_tok: int, out_tok: int) -> float:
         in_price, out_price = PRICING_EUR_PER_MTOK[tier]
@@ -90,9 +101,10 @@ class AnthropicClient:
     async def call(self, call: LLMCall) -> LLMResponse:
         trace_id = call.trace_id or audit("llm.call.start", task_kind=call.task_kind)
 
-        # Scope input
+        # Scope : on ne check PAS le system prompt (contenu trusted qui cite
+        # les marques exclues pour interdire leur traitement). On check
+        # l'entrée user + la sortie LLM, c'est ce qui compte vraiment.
         try:
-            self._scope.assert_clean(call.system, source="llm_system")
             self._scope.assert_clean(call.user, source="llm_user")
         except ScopeError as e:
             audit("llm.call.blocked", trace_id=trace_id, reason="scope_input", detail=str(e))
@@ -121,9 +133,16 @@ class AnthropicClient:
             audit("llm.call.blocked", trace_id=trace_id, reason=reason)
             raise LLMBlocked(f"budget_precheck: {reason}")
 
-        # Appel réel ou fallback
-        if self._anthropic_cls is None and not self._s.anthropic_api_key.get_secret_value():
-            # Mode test / pas de clef : stub
+        # Appel réel : 3 chemins par ordre de préférence.
+        # 1. SDK Anthropic brut si _anthropic_cls injecté (tests, ou prod
+        #    quand on aura la clef + DPA ZDR signé).
+        # 2. Claude CLI local si dispo et pas de clef (cas Phase 1.2).
+        # 3. Stub déterministe sinon.
+        if self._anthropic_cls is not None:
+            resp = await self._real_call(call, choice, user_text, trace_id)
+        elif self.prefers_cli:
+            resp = await self._cli_call(call, choice, user_text, trace_id)
+        else:
             text = self._stub_response(call, choice)
             in_tok, out_tok = est_in, max(1, len(text) // 4)
             resp = LLMResponse(
@@ -132,8 +151,6 @@ class AnthropicClient:
                 cost_eur=self._estimate_cost(choice.tier, in_tok, out_tok),
                 trace_id=trace_id, meta={"stub": True},
             )
-        else:
-            resp = await self._real_call(call, choice, user_text, trace_id)
 
         # Scope output
         try:
@@ -183,6 +200,32 @@ class AnthropicClient:
             input_tokens=in_tok, output_tokens=out_tok,
             cost_eur=self._estimate_cost(choice.tier, in_tok, out_tok),
             trace_id=trace_id, meta={"elapsed_s": elapsed},
+        )
+
+    async def _cli_call(
+        self, call: LLMCall, choice: ModelChoice, user_text: str, trace_id: str
+    ) -> LLMResponse:
+        cli_result = await self._cli.call(
+            model=choice.model_id,
+            system=call.system,
+            user=user_text,
+            max_tokens=call.max_tokens,
+        )
+        eur = cli_result.cost_usd * 0.92  # conversion $→€ approximative
+        return LLMResponse(
+            text=cli_result.text,
+            model=choice.model_id,
+            tier=choice.tier,
+            input_tokens=cli_result.input_tokens + cli_result.cache_creation_input_tokens,
+            output_tokens=cli_result.output_tokens,
+            cost_eur=eur,
+            trace_id=trace_id,
+            meta={
+                "backend": "claude_cli",
+                "duration_ms": cli_result.duration_ms,
+                "cache_read": cli_result.cache_read_input_tokens,
+                "cache_creation": cli_result.cache_creation_input_tokens,
+            },
         )
 
     def _stub_response(self, call: LLMCall, choice: ModelChoice) -> str:
