@@ -28,6 +28,7 @@ logger = get_logger(__name__)
 
 
 class Route(str, Enum):
+    META = "meta"         # salutations, self-intro, "que fais-tu", aide
     BUILDER = "builder"
     COMMERCE = "commerce"
     PROSPECTION = "prospection"
@@ -76,7 +77,19 @@ class ExecutionPlan:
 # point de comparaison (canary) contre l'overconfidence du LLM.
 # Ordre = priorité : les routes les plus spécifiques d'abord.
 _ROUTE_KEYWORDS: list[tuple[Route, list[str]]] = [
-    (Route.CONVERSATION, ["engage la conversation", "relance", "cold mail", "cold email"]),
+    # META — salutations, self-intro, aide. Doit passer AVANT tout le reste
+    # pour qu'un "salut, que peux-tu faire" ne soit pas happé par un keyword
+    # business.
+    (Route.META, [
+        "salut", "bonjour", "hello", "hey", "coucou", "yo",
+        "que peux-tu faire", "que peux tu faire", "qu'est-ce que tu peux faire",
+        "qu'est-ce que tu fais", "que fais-tu", "que fais tu",
+        "qui es-tu", "qui es tu", "c'est qui",
+        "aide", "help", "capacités", "capacites", "fonctionnalités",
+        "comment tu marches", "comment ça marche", "comment ca marche",
+    ]),
+    (Route.CONVERSATION, ["engage la conversation", "relance le", "relance la", "relance les",
+                          "cold mail", "cold email"]),
     (Route.COMPLIANCE, ["compliance", "rgpd", "dpa", "légal"]),
     (Route.COMMS, ["mail à", "relance fournisseur", "sav"]),
     (Route.TRAVEL, ["voyage", "billet", "hôtel", "avion"]),
@@ -141,15 +154,17 @@ class JarvisOrchestrator(AgentBase):
         for route, kws in _ROUTE_KEYWORDS:
             if _kw_hit(low, kws):
                 return RoutedIntent(raw=text, route=route, reasoning=f"kw:{route.value}")
-        if "?" in text and len(text) < 200:
-            return RoutedIntent(raw=text, route=Route.RESEARCH, reasoning="question courte")
+        # Fallthrough : question courte sans keyword business = CLARIFY
+        # (mieux que de router à Research au hasard).
         return RoutedIntent(raw=text, route=Route.CLARIFY, reasoning="aucun mot-clef")
 
     # ---------- Planner ----------
     async def plan(self, intent: RoutedIntent) -> ExecutionPlan:
         plan_id = str(uuid.uuid4())
         steps: list[PlanStep] = []
-        if intent.route == Route.BUILDER:
+        if intent.route == Route.META:
+            steps.append(PlanStep(1, "Jarvis", "reply_meta", {"raw": intent.raw}))
+        elif intent.route == Route.BUILDER:
             steps.append(PlanStep(1, "Builder", "draft_plan", {"intent": intent.raw}))
         elif intent.route == Route.CONVERSATION:
             steps.append(
@@ -253,9 +268,54 @@ class JarvisOrchestrator(AgentBase):
                 "Désolé, je ne peux pas traiter cette demande — elle sort "
                 "du périmètre que tu m'as défini."
             )
+        if intent.route == Route.META:
+            return self._meta_reply()
         if intent.route == Route.CLARIFY:
             return (
-                "Je t'ai bien lu. Tu veux que je lance quoi exactement : "
-                "nouvelle campagne, recherche, automatisation ? Dis-moi en une phrase."
+                "Pas sûr de ce que tu veux lancer. Dis-moi en une phrase : "
+                "prospection ? conversation ? recherche ? automatisation ?"
             )
-        return f"Bien reçu — je route vers {intent.route.value}. Je te reviens quand c'est prêt."
+        # Actions concrètes — on est sans LLM pour l'instant, donc on
+        # annonce ce qu'on ferait plutôt que de prétendre exécuter.
+        nexts = {
+            Route.BUILDER: "Je passe la main au Builder pour draft un plan provisioning.",
+            Route.PROSPECTION: "Je route à Prospection-FR pour sourcing.",
+            Route.CONVERSATION: "Je passe à ConversationOrchestrator.",
+            Route.RESEARCH: "Je route à Research.",
+            Route.COMPLIANCE: "Je route à Compliance pour check-list.",
+            Route.DEV: "Je route à Dev.",
+            Route.FINANCE: "Je route à Finance.",
+            Route.COMMS: "Je route à Comms.",
+            Route.TRAVEL: "Je route à Travel.",
+        }
+        tail = nexts.get(intent.route, "Je ne sais pas encore traiter ça directement.")
+        return (
+            f"Bien reçu. {tail}\n\n"
+            "Note : sans clef Anthropic configurée, j'annonce mais je n'exécute "
+            "pas encore l'appel LLM — c'est le Jalon 1.3."
+        )
+
+    def _meta_reply(self) -> str:
+        return (
+            "Salut Laurent 👋\n\n"
+            "Je suis Jarvis, v6 Phase 1.2. Voici ce que je sais faire aujourd'hui, "
+            "et ce qui est encore en chantier.\n\n"
+            "*Opérationnel maintenant*\n"
+            "• Filtre périmètre des marques exclues verrouillé (double verrou, refus auto)\n"
+            "• Voice lint FR (phrases bannies, manipulation, déni d'IA, opt-out)\n"
+            "• Routing déterministe par mots-clefs\n"
+            "• Builder : `/plan <intention>` → plan de provisioning formalisé\n"
+            "• ConversationOrchestrator : state machine + frequency cap + opt-out\n"
+            "• Compliance : check-list par zone (FR/DACH/UK/US/CA)\n"
+            "• Persistance SQLite locale (bus, queue, memory, audit)\n"
+            "• Whitelist Telegram stricte\n\n"
+            "*En attente de tes credentials*\n"
+            "• Anthropic API key + flag ZDR → active les vrais appels LLM (sinon stub)\n"
+            "• Supabase (tu m'as dit de skip pour l'instant — SQLite suffit)\n\n"
+            "*Essaie*\n"
+            "• `/plan attaque l'Italie` — je te drafte un plan complet\n"
+            "• `/voice <texte>` — je te dis si ça passe le lint\n"
+            "• `trouve-moi 50 carreleurs à Lyon` — routing Prospection\n"
+            "• `automatise le SAV Deco & Pro` — routing Builder\n\n"
+            "Dis-moi par où on attaque."
+        )
