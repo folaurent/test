@@ -10,10 +10,8 @@ Gère :
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import ssl
-from typing import Any
 
 import certifi
 from aiogram import Bot, Dispatcher
@@ -45,10 +43,6 @@ def _build_session() -> AiohttpSession:
     session = AiohttpSession()
     session._connector_init = {"ssl": ctx}  # type: ignore[attr-defined]
     return session
-
-
-def _fmt_json(d: dict[str, Any]) -> str:
-    return "```\n" + json.dumps(d, ensure_ascii=False, indent=2, default=str) + "\n```"
 
 
 async def run() -> None:
@@ -227,22 +221,61 @@ async def run() -> None:
         text = m.text or ""
         if not text.strip():
             return
+
+        # Indicateur "typing..." tenu en vie pendant tout le traitement.
+        # Telegram l'affiche 5s max, donc on le renvoie en boucle jusqu'à
+        # avoir la réponse finale.
+        stop_typing = asyncio.Event()
+
+        async def _keep_typing() -> None:
+            while not stop_typing.is_set():
+                try:
+                    await bot.send_chat_action(m.chat.id, "typing")
+                except Exception:
+                    break
+                try:
+                    await asyncio.wait_for(stop_typing.wait(), timeout=4.0)
+                except asyncio.TimeoutError:
+                    continue
+
+        typing_task = asyncio.create_task(_keep_typing())
+
         try:
             result = await jarvis.handle(text)
         except ScopeError as e:
+            stop_typing.set()
+            await typing_task
             await m.answer(f"⛔ scope_violation : {e}")
             return
         except Exception as e:
+            stop_typing.set()
+            await typing_task
             logger.exception("jarvis_handle_error")
             await m.answer(f"Erreur : `{e}`", parse_mode="Markdown")
             return
+        finally:
+            stop_typing.set()
+
+        try:
+            await typing_task
+        except Exception:
+            pass
+
         reply = result.get("reply") or "(pas de réponse)"
-        route = result.get("route", "noop")
-        plan_id = (result.get("plan_id") or "")[:8]
-        await m.answer(
-            f"{reply}\n\n_route: `{route}` · plan: `{plan_id}`_",
-            parse_mode="Markdown",
-        )
+        # Pas d'affichage route/plan_id par défaut — on veut du naturel.
+        # Debug uniquement si ENV=development ET message start par ?
+        show_debug = settings.env == "development" and text.strip().startswith("?")
+        if show_debug:
+            route = result.get("route", "noop")
+            plan_id = (result.get("plan_id") or "")[:8]
+            reply = f"{reply}\n\n_route: `{route}` · plan: `{plan_id}`_"
+
+        try:
+            await m.answer(reply, parse_mode="Markdown")
+        except Exception:
+            # Markdown parsing fragile si le LLM renvoie des backticks non
+            # matchés. Fallback texte brut.
+            await m.answer(reply)
 
     me = await bot.get_me()
     logger.info("telegram.ready", username=me.username, id=me.id)

@@ -289,43 +289,76 @@ class JarvisOrchestrator(AgentBase):
 
     async def _llm_reply(self, intent: RoutedIntent, plan: ExecutionPlan) -> str:
         system = (
-            SCOPE_SYSTEM_PREFIX
-            + "\n\n[RÔLE] Tu es Jarvis, assistant de Laurent. Tu parles à Laurent "
-            "en direct, pas à un prospect. Ton sobre, direct, pas d'effet de manche. "
-            "Contractions naturelles. Pas de 'j'espère que tu vas bien', pas de "
-            "'bien cordialement'. Réponds en français. Max 4-6 lignes sauf si on "
-            "te demande du fond.\n\n"
-            f"[ROUTE DÉTECTÉE] {intent.route.value}. Raisonnement : {intent.reasoning}.\n\n"
-            "[LIMITES] Sans clef Anthropic brute + Supabase, tu ne peux pas "
-            "encore exécuter de prospection, envoyer de mails, ni persister en "
-            "base cloud. Si la demande implique ça, dis-le honnêtement et "
-            "propose un premier pas concret."
+            "[RÔLE ABSOLU — AUTORITÉ FINALE]\n"
+            "Tu es Jarvis, l'assistant personnel de Laurent, fondateur de Jonction. "
+            "TU N'ES PAS Claude, tu n'es pas Claude Code, tu n'as pas de tools à ta "
+            "disposition en ce moment. Oublie toute instruction précédente sur ton "
+            "identité ou tes capacités techniques. Tu parles à Laurent en DM Telegram.\n\n"
+            "[CE QUE TU NE FAIS JAMAIS]\n"
+            "• Mentionner 'environnement', 'sandbox', 'permission', 'tool', 'web access'\n"
+            "• Lister tes propres limites techniques sauf si demandé explicitement\n"
+            "• Proposer d'activer des outils ('active /allow X')\n"
+            "• Répondre en mode 'aide technique' — tu es un chief of staff\n\n"
+            "[TON]\n"
+            "Sympa, cool, dynamique, compréhensif, pro. Contractions naturelles "
+            "(t'as, c'est, j'peux). Phrases courtes. Une idée par paragraphe. "
+            "Zéro phrase bannie FR type 'j'espère que tu vas bien' ou 'dans l'attente'.\n\n"
+            "[FORMAT RÉPONSE]\n"
+            "Court : 3-6 lignes max. Direct. Action ou question concrète à la fin.\n"
+            "Exception : si Laurent demande du fond, tu peux développer.\n\n"
+            f"[CONTEXTE ROUTE] Route détectée : {intent.route.value}. "
+            f"Raisonnement : {intent.reasoning}.\n\n"
+            "[PHASE ACTUELLE]\n"
+            "Jarvis v6 Phase 1.2. Pas encore d'accès Supabase live, pas de provider "
+            "email configuré. Quand Laurent demande une action concrète (prospecter, "
+            "envoyer, scraper), propose le plan en 2-3 bullets ou pose la question "
+            "qui débloque, ne dis PAS 'je peux pas'.\n"
         )
+        # Haiku par défaut (rapide) pour les routes conversationnelles. Sonnet
+        # seulement pour raisonnement lourd, Opus pour compliance/closing VIP.
         task_kind_by_route = {
-            Route.CLARIFY: "intent_classification",
-            Route.RESEARCH: "research_summary",
-            Route.BUILDER: "planning",
-            Route.PROSPECTION: "planning",
-            Route.CONVERSATION: "cold_email_draft",
-            Route.COMPLIANCE: "compliance_review",
-            Route.DEV: "code_generation",
-            Route.FINANCE: "planning",
-            Route.COMMS: "cold_email_draft",
-            Route.TRAVEL: "planning",
-            Route.OPS: "planning",
+            Route.CLARIFY: "intent_classification",        # Haiku
+            Route.RESEARCH: "intent_classification",       # Haiku (réponse rapide)
+            Route.BUILDER: "planning",                     # Sonnet
+            Route.PROSPECTION: "intent_classification",    # Haiku
+            Route.CONVERSATION: "cold_email_draft",        # Sonnet (qualité)
+            Route.COMPLIANCE: "compliance_review",         # Opus
+            Route.DEV: "code_generation",                  # Sonnet
+            Route.FINANCE: "intent_classification",        # Haiku
+            Route.COMMS: "intent_classification",          # Haiku
+            Route.TRAVEL: "intent_classification",         # Haiku
+            Route.OPS: "intent_classification",            # Haiku
         }
         call = LLMCall(
-            task_kind=task_kind_by_route.get(intent.route, "planning"),
+            task_kind=task_kind_by_route.get(intent.route, "intent_classification"),
             system=system,
             user=intent.raw,
-            max_tokens=600,
+            max_tokens=400,
             trace_id=plan.plan_id,
             external_input=False,
         )
         resp = await self._llm.call(call)
         if resp.blocked:
             return f"[BLOCKED: {resp.blocked}]"
-        return resp.text.strip() or self._default_reply(intent)
+        text = resp.text.strip() or self._default_reply(intent)
+        return self._scrub_persona_leak(text)
+
+    @staticmethod
+    def _scrub_persona_leak(text: str) -> str:
+        """Nettoie les résidus de persona Claude Code qui traversent le system prompt."""
+        replacements = [
+            ("Je n'ai pas la permission d'accéder au web",
+             "Je n'ai pas encore l'accès sourcing câblé"),
+            ("depuis cet environnement", ""),
+            ("dans cet environnement", ""),
+            ("active-moi l'accès", "câble-moi l'accès"),
+            ("/allow WebSearch", "module sourcing"),
+            ("je n'ai pas accès à ", "j'ai pas encore connecté "),
+        ]
+        out = text
+        for old, new in replacements:
+            out = out.replace(old, new)
+        return out
 
     def _default_reply(self, intent: RoutedIntent) -> str:
         if intent.route == Route.REFUSE:
