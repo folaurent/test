@@ -23,15 +23,46 @@ import urllib.request
 
 API_VERSION = "2024-10"
 
+# Pont MCP : fichier de signaux déposé par Claude Code (via le Shopify MCP).
+# L'orchestrateur le lit sans faire d'appel réseau lui-même — la récupération
+# a déjà eu lieu côté agent interactif. Précédence : ingéré > API live > simulé.
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+INGEST_PATH = os.path.join(ROOT, "state", "shopify_signals.json")
+
 
 def configured() -> bool:
     return bool(os.environ.get("SHOPIFY_STORE_DOMAIN") and os.environ.get("SHOPIFY_ADMIN_TOKEN"))
 
 
+def has_ingested() -> bool:
+    return os.path.exists(INGEST_PATH)
+
+
 def status() -> str:
+    if has_ingested():
+        try:
+            with open(INGEST_PATH, encoding="utf-8") as f:
+                src = json.load(f).get("source", "ingested")
+            return f"ingested via MCP ({src})"
+        except Exception:
+            return "ingested file present (unreadable)"
     if configured():
         return f"configured ({os.environ['SHOPIFY_STORE_DOMAIN']})"
     return "not configured (using simulated data)"
+
+
+def _ingested_signals():
+    """Lit les signaux déposés par le pont MCP, si présents et valides."""
+    if not has_ingested():
+        return None
+    try:
+        with open(INGEST_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict) and data.get("kpis") is not None:
+            return data
+    except Exception:
+        return None
+    return None
 
 
 def _graphql(query: str) -> dict:
@@ -81,9 +112,17 @@ def _simulated_signals() -> dict:
 def fetch_signals(dry_run: bool = True) -> dict:
     """
     Renvoie {source, kpis:[{name,value,unit,assumption}], signals:[...]}.
-    - dry-run OU non configuré -> données simulées (aucun appel réseau).
-    - configuré + live -> lecture réelle Shopify, dérivation prudente des KPI.
+    Précédence :
+      1. Fichier ingéré via le pont MCP (state/shopify_signals.json) — données
+         réelles déposées par Claude Code, utilisables même en dry-run car
+         l'orchestrateur ne fait aucun appel réseau.
+      2. API Admin live (configuré + --live).
+      3. Données simulées.
     """
+    ingested = _ingested_signals()
+    if ingested:
+        return ingested
+
     if dry_run or not configured():
         return _simulated_signals()
 

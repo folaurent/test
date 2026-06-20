@@ -3,6 +3,10 @@ state/company.db
 state/hook_audit.log
 state/cron.log
 
+# Signaux Shopify ingérés via le pont MCP (données réelles, propres à la boutique)
+# Le schéma de référence versionné est state/shopify_signals.example.json
+state/shopify_signals.json
+
 # Livrables et rapports produits à l'exécution
 artifacts/initiative_*/
 reports/*.md

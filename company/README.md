@@ -156,6 +156,19 @@ export SHOPIFY_ADMIN_TOKEN="shpat_..."
 Le connecteur n'écrit jamais. Toute écriture (créer un produit, changer un
 prix, lancer une promo) reste une action **ROUGE** → file d'approbation.
 
+**Pont MCP (complément interactif).** Quand le cycle est piloté par **Claude
+Code**, les outils **Shopify MCP** peuvent récupérer des données que l'API
+Admin headless ne fournit pas (sessions, taux de conversion). Le flux :
+
+1. Claude Code appelle le Shopify MCP (`get-shop-info`, `run-analytics-query`…).
+2. Il écrit `state/shopify_signals.json` (schéma : `state/shopify_signals.example.json`).
+3. L'orchestrateur lit ce fichier **en priorité** (ingéré > API live > simulé),
+   **sans aucun appel réseau de sa part** — la récupération a déjà eu lieu côté
+   agent. Le dry-run reste donc sans effet de bord.
+
+Slash command dédiée : **`/ingest-shopify`**. Le fichier ingéré n'est pas
+versionné (données propres à la boutique) ; seul le schéma d'exemple l'est.
+
 Reporting Slack / Telegram :
 
 ```bash

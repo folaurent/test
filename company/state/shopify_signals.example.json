@@ -1,0 +1,15 @@
+{
+  "_comment": "Schéma du pont MCP. Claude Code récupère les données via le Shopify MCP (get-shop-info, run-analytics-query, search_products...) et écrit state/shopify_signals.json selon ce format. L'orchestrateur le lit en priorité (ingéré > API live > simulé), sans appel réseau de sa part.",
+  "source": "shopify-mcp:<nom boutique>",
+  "fetched_at": "AAAA-MM-JJ",
+  "window": "30d",
+  "kpis": [
+    {"name": "conversion_rate", "value": 0.0, "unit": "%", "assumption": false, "note": "source/calcul"},
+    {"name": "organic_traffic", "value": 0, "unit": "visits", "assumption": false, "note": "source/calcul"},
+    {"name": "cart_abandon_rate", "value": 0.0, "unit": "%", "assumption": false, "note": "source/calcul"},
+    {"name": "repeat_purchase_rate", "value": 0.0, "unit": "%", "assumption": false, "note": "source/calcul"}
+  ],
+  "signals": [
+    "Texte libre : faits saillants pour l'idéation du CEO (n'inventez rien)."
+  ]
+}

@@ -291,8 +291,9 @@ def phase_measure(conn, dry_run, actor="data-analytics"):
     measured = {k["name"]: k for k in signals.get("kpis", [])}
     for name, (target, unit) in KPI_TARGETS.items():
         kpi = measured.get(name)
-        # Valeur réelle disponible (mesurée, non-hypothèse, > 0) -> on l'utilise.
-        if kpi and not kpi.get("assumption") and kpi.get("value"):
+        # Valeur réelle disponible (mesurée, non-hypothèse) -> on l'utilise.
+        # NB : 0 est une valeur mesurée valide (ex. conversion 0%), pas une absence.
+        if kpi and not kpi.get("assumption") and kpi.get("value") is not None:
             value = round(float(kpi["value"]), 2)
         else:
             # Sinon : amélioration simulée vs cycle précédent (transparent).

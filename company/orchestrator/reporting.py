@@ -23,9 +23,19 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPORTS_DIR = os.path.join(ROOT, "reports")
 
 
-def _kpi_arrow(value, target):
+# KPI où une valeur PLUS BASSE est meilleure (ex. taux d'abandon de panier).
+LOWER_IS_BETTER = {"cart_abandon_rate"}
+
+
+def _kpi_arrow(name, value, target):
     if target in (None, 0):
         return "—"
+    if name in LOWER_IS_BETTER:
+        if value <= target:
+            return "✅"
+        if value <= 1.3 * target:
+            return "🟡"
+        return "🔴"
     if value >= target:
         return "✅"
     if value >= 0.7 * target:
@@ -94,7 +104,7 @@ def build_brief(conn, cycle_id, mode, new_agents=None, budget_caps=(10.0, 100.0)
         L.append("|----------|--------|-------|--------|")
         for m in metrics:
             L.append(f"| {m['name']} | {m['value']:g} {m['unit'] or ''} | "
-                     f"{m['target']:g} | {_kpi_arrow(m['value'], m['target'])} |")
+                     f"{m['target']:g} | {_kpi_arrow(m['name'], m['value'], m['target'])} |")
     else:
         L.append("_Aucune métrique enregistrée pour l'instant._")
     L.append("")
