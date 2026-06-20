@@ -1,0 +1,16 @@
+# État runtime régénéré par --bootstrap (ne pas versionner)
+state/company.db
+state/hook_audit.log
+state/cron.log
+
+# Livrables et rapports produits à l'exécution
+artifacts/initiative_*/
+reports/*.md
+
+# Agents créés dynamiquement par l'Agent Factory à l'exécution
+# (le roster initial de 13 agents EST versionné ; décommenter pour ignorer les spawnés)
+# .claude/agents/!(<roster>).md
+
+# Python
+__pycache__/
+*.pyc
