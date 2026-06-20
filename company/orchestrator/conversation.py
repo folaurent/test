@@ -41,15 +41,35 @@ PERSONA = (
 
 def snapshot(conn) -> str:
     """Photo compacte de l'état réel pour ancrer la réponse de l'agent."""
-    kpis = memory.latest_metrics(conn)
     appr = memory.list_approvals(conn, "pending")
     inits = memory.list_initiatives(conn)
     sig = shopify.fetch_signals(dry_run=True)
+    src = sig.get("source", "?")
+    simulated = "simulated" in src.lower()
 
-    lines = [f"Source de données : {sig.get('source')}"]
-    if kpis:
-        lines.append("KPI vs cibles : " + " ; ".join(
-            f"{m['name']}={m['value']:g}{m['unit'] or ''}/cible {m['target']:g}" for m in kpis))
+    targets = {m["name"]: m.get("target") for m in memory.latest_metrics(conn)}
+
+    lines = []
+    if simulated:
+        lines.append("⚠️ ATTENTION — DONNÉES SIMULÉES : aucune source réelle n'est connectée. "
+                     "Les chiffres ci-dessous sont des PLACEHOLDERS, PAS les vrais chiffres de "
+                     "la boutique. Ne les présente JAMAIS comme réels. Dis clairement à "
+                     "l'opérateur que les données réelles ne sont pas branchées et propose de "
+                     "les connecter (token Shopify ou pont MCP).")
+    tag = " [SIMULÉ]" if simulated else " [réel]"
+    lines.append(f"Source de données : {src}{tag}")
+
+    # KPI à partir des signaux (vraies valeurs + drapeau hypothèse), cible depuis metrics.
+    kpi_items = sig.get("kpis") or []
+    if kpi_items:
+        parts = []
+        for k in kpi_items:
+            tgt = targets.get(k["name"])
+            t = f"/cible {tgt:g}" if tgt else ""
+            flag = " (hypothèse, non mesuré)" if k.get("assumption") else ""
+            parts.append(f"{k['name']}={k['value']:g}{k.get('unit','')}{t}{flag}")
+        lines.append(f"KPI{tag} : " + " ; ".join(parts))
+
     for s in (sig.get("signals") or [])[:6]:
         lines.append(f"Signal : {s}")
     running = [i for i in inits if i["status"] in ("running", "planned", "closed")]
