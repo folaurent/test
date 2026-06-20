@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 
 import memory
 import notify
+from connectors import shopify
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPORTS_DIR = os.path.join(ROOT, "reports")
@@ -107,6 +108,17 @@ def build_brief(conn, cycle_id, mode, new_agents=None, budget_caps=(10.0, 100.0)
                      f"{m['target']:g} | {_kpi_arrow(m['name'], m['value'], m['target'])} |")
     else:
         L.append("_Aucune métrique enregistrée pour l'instant._")
+    L.append("")
+
+    # --- Contexte boutique (signaux de la source de données) ---
+    sig = shopify.fetch_signals(dry_run=True)
+    L.append(f"## 🛍️ Contexte boutique — _source : {sig.get('source')}_")
+    facts = sig.get("signals") or []
+    if facts:
+        for s in facts:
+            L.append(f"- {s}")
+    else:
+        L.append("_Aucun signal disponible._")
     L.append("")
 
     # --- File d'approbation ---

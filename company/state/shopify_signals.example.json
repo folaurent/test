@@ -9,6 +9,13 @@
     {"name": "cart_abandon_rate", "value": 0.0, "unit": "%", "assumption": false, "note": "source/calcul"},
     {"name": "repeat_purchase_rate", "value": 0.0, "unit": "%", "assumption": false, "note": "source/calcul"}
   ],
+  "context": {
+    "_comment": "Bloc structuré optionnel : matière supplémentaire pour le CEO (catalogue, sources de trafic, appareils, entonnoir). Champs libres.",
+    "catalog": {"active_products_min": 0, "price_eur": {"min": 0, "median": 0, "max": 0}, "top_types": {}},
+    "traffic_sources": {"direct": 0, "search": 0, "social": 0},
+    "devices": {"desktop": 0, "mobile": 0},
+    "funnel_30d": {"sessions": 0, "cart_additions": 0, "reached_checkout": 0, "completed": 0}
+  },
   "signals": [
     "Texte libre : faits saillants pour l'idéation du CEO (n'inventez rien)."
   ]
