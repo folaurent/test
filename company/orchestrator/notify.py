@@ -79,3 +79,42 @@ def _send_telegram(text: str) -> str:
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     code = _post_json(url, {"chat_id": chat_id, "text": text[:4000]})
     return f"http {code}"
+
+
+# ----------------------------------------------------------------------
+#  Lecture Slack (entrant) — pour le dialogue bidirectionnel (--listen).
+#  Nécessite un jeton de bot (xoxb-) + l'ID de canal — l'incoming webhook
+#  seul ne permet PAS de lire. Dégrade proprement si absents.
+# ----------------------------------------------------------------------
+def can_read_slack() -> bool:
+    return bool(os.environ.get("SLACK_BOT_TOKEN") and os.environ.get("SLACK_CHANNEL_ID"))
+
+
+def read_slack_messages(oldest_ts: str | None = None, limit: int = 50) -> list:
+    """
+    Renvoie les messages humains du canal depuis oldest_ts (exclus), du plus
+    ancien au plus récent : [{"ts":..., "user":..., "text":...}].
+    Filtre les messages de bots (dont les nôtres via webhook).
+    """
+    if not can_read_slack():
+        return []
+    token = os.environ["SLACK_BOT_TOKEN"]
+    channel = os.environ["SLACK_CHANNEL_ID"]
+    url = f"https://slack.com/api/conversations.history?channel={channel}&limit={limit}"
+    if oldest_ts:
+        url += f"&oldest={oldest_ts}"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+    with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
+        data = json.loads(resp.read().decode("utf-8"))
+    if not data.get("ok"):
+        return []
+    msgs = []
+    for m in data.get("messages", []):
+        # On ignore les messages de bot / système, on ne garde que les humains.
+        if m.get("bot_id") or m.get("subtype") or not m.get("user"):
+            continue
+        if oldest_ts and m.get("ts") == oldest_ts:
+            continue
+        msgs.append({"ts": m.get("ts"), "user": m.get("user"), "text": m.get("text", "")})
+    msgs.sort(key=lambda x: float(x["ts"]))
+    return msgs

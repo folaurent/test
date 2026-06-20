@@ -24,6 +24,7 @@ import argparse
 import os
 import re
 
+import conversation
 import factory
 import guardrails as G
 import llm
@@ -574,6 +575,12 @@ def main():
                    help="envoie le brief sur Slack/Telegram (notification AMBRE, à la demande)")
     p.add_argument("--say", metavar="MESSAGE",
                    help="l'agent envoie un message libre sur Slack/Telegram")
+    p.add_argument("--reply", metavar="MESSAGE",
+                   help="dialogue : l'agent répond naturellement à un message opérateur "
+                        "(et exécute les arbitrages explicites)")
+    p.add_argument("--listen", action="store_true",
+                   help="lit les nouveaux messages Slack et y répond (dialogue autonome ; "
+                        "nécessite SLACK_BOT_TOKEN + SLACK_CHANNEL_ID)")
     p.add_argument("--org", action="store_true", help="affiche organigramme + agents + KPI")
     args = p.parse_args()
 
@@ -640,6 +647,40 @@ def main():
         memory.audit(conn, "ceo", "SLACK_SAY", {"message": args.say, "notify": res},
                      action_class="AMBER")
         print(f"📤 {res}")
+        conn.close(); return
+    if args.reply:
+        conn = memory.connect()
+        reply, actions = conversation.respond(conn, args.reply, dry_run=False)
+        res = notify.send_message(reply, dry_run=False)
+        memory.audit(conn, "ceo", "CONVERSATION_REPLY",
+                     {"in": args.reply, "actions": actions, "notify": res}, action_class="AMBER")
+        print(f"💬 {reply}")
+        print(f"   actions: {actions or 'aucune'} | envoi: {res.get('status')}")
+        conn.close(); return
+    if args.listen:
+        if not notify.can_read_slack():
+            print("🛑 --listen nécessite SLACK_BOT_TOKEN + SLACK_CHANNEL_ID (lecture Slack).")
+            print("   L'incoming webhook seul ne permet que d'écrire. Voir .env.example.")
+            return
+        conn = memory.connect()
+        ts_file = os.path.join(ROOT, "state", "slack_last_ts")
+        last = None
+        if os.path.exists(ts_file):
+            with open(ts_file, encoding="utf-8") as f:
+                last = f.read().strip() or None
+        msgs = notify.read_slack_messages(oldest_ts=last)
+        if not msgs:
+            print("(aucun nouveau message)")
+            conn.close(); return
+        for m in msgs:
+            reply, actions = conversation.respond(conn, m["text"], dry_run=False)
+            notify.send_message(reply, dry_run=False)
+            memory.audit(conn, "ceo", "CONVERSATION_LISTEN",
+                         {"from": m["user"], "in": m["text"], "actions": actions},
+                         action_class="AMBER")
+            print(f"↩️  «{m['text'][:60]}» -> répondu (actions: {actions or 'aucune'})")
+        with open(ts_file, "w", encoding="utf-8") as f:
+            f.write(msgs[-1]["ts"])
         conn.close(); return
     if args.push_brief:
         # Notification AMBRE vers le canal de l'opérateur (brief informatif).

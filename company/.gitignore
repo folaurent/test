@@ -7,6 +7,9 @@ state/cron.log
 # Le schéma de référence versionné est state/shopify_signals.example.json
 state/shopify_signals.json
 
+# Curseur de lecture Slack (dialogue --listen)
+state/slack_last_ts
+
 # Livrables et rapports produits à l'exécution
 artifacts/initiative_*/
 reports/*.md

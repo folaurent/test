@@ -216,8 +216,33 @@ COMPANY_SLACK_ALERTS=1 python orchestrator/orchestrator.py --cycle --dry-run
 
 `COMPANY_SLACK_ALERTS=1` active l'alerte même en dry-run (sinon elle ne part
 qu'en `--live`). Tous ces envois sont **AMBRE** (notification vers ton propre
-canal, réversible) et journalisés. La communication **Slack → agent** (te
-répondre depuis Slack) nécessiterait une app Slack (Events API) — non incluse.
+canal, réversible) et journalisés.
+
+### Dialogue naturel (l'agent se comporte comme un humain)
+
+L'agent CEO **dialogue** : il parle naturellement, expose son analyse et sa
+recommandation, mais **décide avec toi** — il propose, demande, et n'agit sur le
+ROUGE qu'avec ton accord explicite. Persona dans `orchestrator/conversation.py`.
+
+```bash
+# lui répondre (et acter une décision dans la foulée)
+python orchestrator/orchestrator.py --reply "ok pour #1, mais pourquoi le SEO d'abord ?"   # /reply
+
+# dialogue autonome : il lit Slack et répond seul (cron-friendly)
+python orchestrator/orchestrator.py --listen                                               # /listen
+```
+
+- **`--reply "<msg>"`** : l'agent répond, et s'il y a un arbitrage explicite
+  (« ok pour #1 », « rejette #2 »), il l'exécute avant de répondre.
+- **`--listen`** : lit les nouveaux messages du canal et répond à chacun. Pour
+  lire Slack il faut un **bot** (`SLACK_BOT_TOKEN` + `SLACK_CHANNEL_ID`) — l'incoming
+  webhook ne sert qu'à écrire. Le curseur de lecture vit dans `state/slack_last_ts`.
+- Réponses pleinement naturelles avec `ANTHROPIC_API_KEY` (LLM) ; sinon repli
+  conversationnel ancré sur l'état réel. Tout est **AMBRE** et journalisé ;
+  jamais d'action ROUGE sans ton accord.
+
+**Boucle complète possible** : `/run-cycle` (le CEO travaille + t'alerte) →
+tu réponds sur Slack → `/listen` (il lit, discute, et acte vos décisions).
 
 Vérifier l'état des intégrations à tout moment : `python orchestrator/orchestrator.py --org`.
 
