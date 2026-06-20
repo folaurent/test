@@ -240,6 +240,18 @@ def phase_intake(conn, cycle_id, dry_run, actor="ceo"):
     clean_texts, blocked = G.filter_excluded(conn, texts, actor="chief-of-staff")
     clean = [raw_ideas[i] for i, t in enumerate(texts) if t in clean_texts]
 
+    # DÉ-DOUBLONNAGE : ne pas recréer une initiative dont le titre existe déjà
+    # (quel que soit son statut). Évite que la file d'arbitrage gonfle à chaque cycle.
+    existing = {i["title"].strip().lower() for i in memory.list_initiatives(conn)}
+    seen, deduped = set(), []
+    for idea in clean:
+        key = idea["title"].strip().lower()
+        if key in existing or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(idea)
+    clean = deduped
+
     for idea in clean:
         memory.add_initiative(conn, idea["title"], idea["hypothesis"],
                               rationale="Hypothèse générée par le CEO à l'INTAKE.",
