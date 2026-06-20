@@ -28,6 +28,9 @@ API_VERSION = "2024-10"
 # a déjà eu lieu côté agent interactif. Précédence : ingéré > API live > simulé.
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 INGEST_PATH = os.path.join(ROOT, "state", "shopify_signals.json")
+# Seed versionné (réel, embarqué dans le repo) : sert de repli quand aucun
+# fichier ingéré "live" n'est présent (ex. déploiement frais sur un VPS).
+SEED_PATH = os.path.join(ROOT, "state", "shopify_signals.seed.json")
 
 
 def configured() -> bool:
@@ -48,21 +51,30 @@ def status() -> str:
             return "ingested file present (unreadable)"
     if configured():
         return f"configured ({os.environ['SHOPIFY_STORE_DOMAIN']})"
+    if os.path.exists(SEED_PATH):
+        return "seed (real data embedded in repo)"
     return "not configured (using simulated data)"
 
 
-def _ingested_signals():
-    """Lit les signaux déposés par le pont MCP, si présents et valides."""
-    if not has_ingested():
-        return None
+def _read_signals_file(path):
     try:
-        with open(INGEST_PATH, encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         if isinstance(data, dict) and data.get("kpis") is not None:
             return data
     except Exception:
         return None
     return None
+
+
+def _ingested_signals():
+    """Lit les signaux déposés par le pont MCP (live), si présents et valides."""
+    return _read_signals_file(INGEST_PATH) if has_ingested() else None
+
+
+def _seed_signals():
+    """Lit le seed versionné (réel) embarqué dans le repo, si présent."""
+    return _read_signals_file(SEED_PATH) if os.path.exists(SEED_PATH) else None
 
 
 def _graphql(query: str) -> dict:
@@ -124,7 +136,8 @@ def fetch_signals(dry_run: bool = True) -> dict:
         return ingested
 
     if dry_run or not configured():
-        return _simulated_signals()
+        # Repli : seed réel versionné si dispo, sinon simulé.
+        return _seed_signals() or _simulated_signals()
 
     try:
         payload = _graphql(_QUERY)

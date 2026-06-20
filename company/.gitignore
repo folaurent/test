@@ -10,6 +10,9 @@ state/shopify_signals.json
 # Curseur de lecture Slack (dialogue --listen)
 state/slack_last_ts
 
+# Logs runtime (cron, autodeploy, listen…)
+state/*.log
+
 # Livrables et rapports produits à l'exécution
 artifacts/initiative_*/
 reports/*.md

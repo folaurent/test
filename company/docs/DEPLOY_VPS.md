@@ -98,6 +98,28 @@ L'état est monté en volume (`./state`, `./reports`, `./artifacts`) → persist
 
 ---
 
+## Auto-déploiement (le VPS se met à jour tout seul)
+
+Pour que **chaque nouvelle version poussée sur Git se déploie automatiquement**
+(sans retoucher au serveur), active le cron d'auto-déploiement **une seule fois** :
+
+```bash
+( crontab -l 2>/dev/null; \
+  echo "*/5 * * * * bash /opt/deco/company/deploy/autodeploy.sh >> /opt/deco/company/state/autodeploy.log 2>&1" \
+) | crontab -
+```
+
+`deploy/autodeploy.sh` vérifie toutes les 5 min si la branche distante a avancé ;
+si oui, il fait `git reset --hard origin/<branche>` + `docker compose up -d --build`.
+`.env` et `state/` (gitignorés) sont **préservés**. Logs : `state/autodeploy.log`.
+
+> Les données réelles de la boutique sont embarquées dans le repo via
+> `state/shopify_signals.seed.json` (relevé MCP) : elles arrivent donc seules au
+> déploiement. Le pont MCP (`/ingest-shopify`, fichier `shopify_signals.json`)
+> reste prioritaire pour rafraîchir avec des données plus récentes.
+
+---
+
 ## Mode réel (`--live`)
 
 Par défaut, les **cycles** tournent en `--dry-run` (aucun effet de bord). Pour
