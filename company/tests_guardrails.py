@@ -3,9 +3,11 @@ import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "orchestrator"))
 import memory, guardrails as G, factory
 
-# DB temporaire isolée
+# DB + dossier d'agents temporaires isolés (n'altère pas le roster réel)
 import tempfile
-memory.DB_PATH = os.path.join(tempfile.mkdtemp(), "test.db")
+_tmp = tempfile.mkdtemp()
+memory.DB_PATH = os.path.join(_tmp, "test.db")
+factory.AGENTS_DIR = os.path.join(_tmp, "agents")
 conn = memory.connect()
 
 ok = True

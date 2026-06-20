@@ -26,8 +26,10 @@ import re
 
 import factory
 import guardrails as G
+import llm
 import memory
 import reporting
+from connectors import shopify
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AGENTS_DIR = os.path.join(ROOT, ".claude", "agents")
@@ -95,17 +97,69 @@ def sync_agents(conn):
 
 
 # ----------------------------------------------------------------------
+#  Cognition LLM (action AMBRE — réelle en --live, simulée en dry-run)
+# ----------------------------------------------------------------------
+def _charge_llm(conn, cycle_id, res, actor):
+    """Impute le coût d'un appel LLM réel au budget cycle + global, journalisé."""
+    if not res:
+        return
+    cost = res.get("cost", 0.0)
+    cycle_period = f"cycle:{cycle_id}"
+    if not G.check_budget(conn, cycle_period, cost, CYCLE_CAP) or \
+       not G.check_budget(conn, "global", cost, GLOBAL_CAP):
+        return
+    memory.add_spend(conn, cycle_period, cost, CYCLE_CAP)
+    memory.add_spend(conn, "global", cost, GLOBAL_CAP)
+    memory.audit(conn, actor, "LLM_CALL",
+                 {"model": res.get("model"), "in": res.get("in_tokens"),
+                  "out": res.get("out_tokens"), "cost": cost}, action_class="AMBER")
+
+
+def _ceo_ideate_llm(conn, cycle_id, signals, dry_run, actor="ceo"):
+    """Le CEO génère des hypothèses via LLM (live) ou renvoie None (stub)."""
+    sys = ("Tu es l'Agent CEO d'une entreprise e-commerce/contenu. "
+           "Génère 2 hypothèses de croissance actionnables. "
+           "Réponds en JSON: une liste d'objets {\"title\":..., \"hypothesis\":...}. "
+           "Cite des leviers réels (conversion, SEO, rétention). N'invente aucune donnée. "
+           "N'utilise JAMAIS les entités Sika ou Parexlanko.")
+    usr = "Signaux de l'entreprise:\n" + "\n".join(f"- {s}" for s in signals.get("signals", []))
+    res = llm.complete(sys, usr, dry_run=dry_run, max_tokens=600)
+    _charge_llm(conn, cycle_id, res, actor)
+    if not res:
+        return None
+    import json as _json
+    try:
+        text = res["text"].strip()
+        start, end = text.find("["), text.rfind("]")
+        ideas = _json.loads(text[start:end + 1]) if start >= 0 else []
+        out = []
+        for it in ideas[:2]:
+            if isinstance(it, dict) and it.get("title"):
+                out.append({"title": str(it["title"])[:120],
+                            "hypothesis": str(it.get("hypothesis", ""))[:300],
+                            "owner": "growth-marketing", "kpi": None, "skill": None})
+        return out or None
+    except Exception:
+        return None
+
+
+# ----------------------------------------------------------------------
 #  Phases du cycle
 # ----------------------------------------------------------------------
-def phase_intake(conn, actor="ceo"):
+def phase_intake(conn, cycle_id, dry_run, actor="ceo"):
     """Rassemble idées CEO + items en attente, filtre les exclusions (verrou 1)."""
     proposed = memory.list_initiatives(conn, status="proposed")
+    signals = shopify.fetch_signals(dry_run=dry_run)
     raw_ideas = []
-    # Si peu d'items en file, le CEO génère des hypothèses.
+    # Si peu d'items en file, le CEO génère des hypothèses (LLM si live, sinon banque).
     if len(proposed) < 2:
-        for title, hyp, owner, kpi, skill in CEO_IDEA_BANK:
-            raw_ideas.append({"title": title, "hypothesis": hyp, "owner": owner,
-                              "kpi": kpi, "skill": skill})
+        llm_ideas = _ceo_ideate_llm(conn, cycle_id, signals, dry_run, actor)
+        if llm_ideas:
+            raw_ideas.extend(llm_ideas)
+        else:
+            for title, hyp, owner, kpi, skill in CEO_IDEA_BANK:
+                raw_ideas.append({"title": title, "hypothesis": hyp, "owner": owner,
+                                  "kpi": kpi, "skill": skill})
 
     # VERROU 1 — filtre d'exclusion de données à l'INTAKE.
     texts = [f"{i['title']} {i['hypothesis']}" for i in raw_ideas]
@@ -116,8 +170,10 @@ def phase_intake(conn, actor="ceo"):
         memory.add_initiative(conn, idea["title"], idea["hypothesis"],
                               rationale="Hypothèse générée par le CEO à l'INTAKE.",
                               owner=idea["owner"], expected_kpi=idea["kpi"])
-    memory.audit(conn, actor, "INTAKE", {"new_ideas": len(clean), "blocked": len(blocked)})
-    return {"new": len(clean), "blocked": blocked}
+    memory.audit(conn, actor, "INTAKE",
+                 {"new_ideas": len(clean), "blocked": len(blocked),
+                  "data_source": signals.get("source")})
+    return {"new": len(clean), "blocked": blocked, "source": signals.get("source")}
 
 
 def phase_triage(conn, actor="chief-of-staff"):
@@ -228,18 +284,28 @@ def phase_review(conn, actor="quality-retro"):
     return {"checked": len(done), "ok": ok}
 
 
-def phase_measure(conn, actor="data-analytics"):
-    """Met à jour les metrics vs cibles (placeholder déterministe en dry-run)."""
+def phase_measure(conn, dry_run, actor="data-analytics"):
+    """Met à jour les metrics vs cibles depuis Shopify (réel) ou simulé."""
     period = f"cycle:{memory.cycle_count(conn)}"
+    signals = shopify.fetch_signals(dry_run=dry_run)
+    measured = {k["name"]: k for k in signals.get("kpis", [])}
     for name, (target, unit) in KPI_TARGETS.items():
-        prev = memory.fetchone(conn,
-                               "SELECT value FROM metrics WHERE name=? ORDER BY recorded_at DESC LIMIT 1",
-                               (name,))
-        base = prev["value"] if prev else target * 0.6
-        value = round(base * 1.05, 2)  # légère amélioration simulée
+        kpi = measured.get(name)
+        # Valeur réelle disponible (mesurée, non-hypothèse, > 0) -> on l'utilise.
+        if kpi and not kpi.get("assumption") and kpi.get("value"):
+            value = round(float(kpi["value"]), 2)
+        else:
+            # Sinon : amélioration simulée vs cycle précédent (transparent).
+            prev = memory.fetchone(
+                conn,
+                "SELECT value FROM metrics WHERE name=? ORDER BY recorded_at DESC LIMIT 1",
+                (name,))
+            base = prev["value"] if prev else target * 0.6
+            value = round(base * 1.05, 2)
         memory.record_metric(conn, name, value, unit, target, period)
-    memory.audit(conn, actor, "MEASURE", {"kpis": list(KPI_TARGETS)})
-    return {"kpis": len(KPI_TARGETS)}
+    memory.audit(conn, actor, "MEASURE",
+                 {"kpis": list(KPI_TARGETS), "data_source": signals.get("source")})
+    return {"kpis": len(KPI_TARGETS), "source": signals.get("source")}
 
 
 def phase_adapt(conn, selected, actor="quality-retro"):
@@ -279,13 +345,13 @@ def run_cycle(dry_run=True):
     sync_agents(conn)
     memory.audit(conn, "orchestrator", "CYCLE_START", {"cycle_id": cycle_id, "mode": mode})
 
-    intake = phase_intake(conn)
+    intake = phase_intake(conn, cycle_id, dry_run)
     phase_triage(conn)
     selected = phase_plan(conn, cycle_id)
     new_agents = phase_dispatch(conn, selected)
     phase_execute(conn, cycle_id, dry_run)
     phase_review(conn)
-    phase_measure(conn)
+    phase_measure(conn, dry_run)
     phase_adapt(conn, selected)
 
     path = reporting.write_brief(conn, cycle_id, mode, new_agents,
@@ -296,6 +362,7 @@ def run_cycle(dry_run=True):
 
     print(f"✅ Cycle #{memory.cycle_count(conn)} terminé ({mode}).")
     print(f"   Initiatives lancées : {len(selected)} | Nouveaux agents : {len(new_agents)}")
+    print(f"   Données : {intake.get('source')} | LLM : {llm.status()}")
     print(f"   Brief CEO : {os.path.relpath(path, ROOT)}")
     print(f"   File d'approbation : {len(memory.list_approvals(conn))} décision(s) ROUGE en attente.")
     print(f"   Compteur exclusion de données : {memory.total_exclusion_attempts(conn)} (cible 0)")
@@ -367,6 +434,11 @@ def main():
         for m in memory.latest_metrics(conn):
             print(f"  {m['name']:<22} {m['value']:g}{m['unit']}  (cible {m['target']:g})")
         print(f"\nExclusions: total tentatives = {memory.total_exclusion_attempts(conn)} (cible 0)")
+        print("\n=== INTÉGRATIONS ===")
+        print(f"  LLM     : {llm.status()}")
+        print(f"  Shopify : {shopify.status()}")
+        live = os.environ.get('COMPANY_ALLOW_LIVE') == '1'
+        print(f"  Mode    : {'LIVE autorisé' if live else 'dry-run (réel verrouillé)'}")
         conn.close(); return
     if args.brief:
         conn = memory.connect()
@@ -376,6 +448,14 @@ def main():
         print(f"✅ Brief régénéré : {os.path.relpath(path, ROOT)}")
         conn.close(); return
     if args.cycle:
+        # Garde-fou de passage en réel : --live exige une autorisation explicite
+        # et durable (COMPANY_ALLOW_LIVE=1), sinon on refuse et on explique.
+        if not args.dry_run and os.environ.get("COMPANY_ALLOW_LIVE") != "1":
+            print("🛑 Mode --live demandé mais non autorisé.")
+            print("   Le réel engage des coûts (appels LLM/API) et des effets externes.")
+            print("   Pour autoriser : export COMPANY_ALLOW_LIVE=1, puis relancer.")
+            print("   Rappel : les actions ROUGE restent TOUJOURS en file d'approbation.")
+            return
         run_cycle(dry_run=args.dry_run); return
 
     p.print_help()

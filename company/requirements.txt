@@ -1,0 +1,4 @@
+# Le cœur du système tourne en Python stdlib pur (dry-run sans dépendance).
+# La cognition LLM réelle (mode --live) nécessite le SDK officiel Anthropic :
+anthropic>=0.111
+# Les connecteurs Shopify et Slack/Telegram utilisent urllib (stdlib) — rien à installer.

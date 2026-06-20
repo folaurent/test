@@ -121,16 +121,70 @@ En dry-run, `notify.py` journalise ce qui *serait* envoyé, sans appel réseau.
 
 ---
 
+## Intégrations (LLM, Shopify, Slack)
+
+Toutes les intégrations **dégradent proprement** : si la dépendance/clé est
+présente et qu'on est en `--live`, elles font le travail réel ; sinon (ou en
+`--dry-run`), elles retombent sur un repli déterministe simulé. Le dry-run
+reste donc toujours sans effet de bord externe.
+
+| Intégration | Module | Active si | Comportement par défaut |
+|---|---|---|---|
+| **LLM (Claude)** | `orchestrator/llm.py` | `ANTHROPIC_API_KEY` + SDK `anthropic` + `--live` | Stub déterministe (idéation depuis la banque) |
+| **Shopify** | `orchestrator/connectors/shopify.py` | `SHOPIFY_STORE_DOMAIN` + `SHOPIFY_ADMIN_TOKEN` + `--live` | KPI simulés |
+| **Slack/Telegram** | `orchestrator/notify.py` | webhook/token présents + `--live` | Brief en fichier seul |
+
+Cognition LLM réelle (mode `--live`) :
+
+```bash
+pip install -r requirements.txt          # installe le SDK anthropic
+export ANTHROPIC_API_KEY="sk-ant-..."
+export COMPANY_LLM_MODEL="claude-opus-4-8"   # optionnel (défaut)
+```
+
+Un appel LLM est classé **AMBRE** : son coût estimé est imputé au budget
+(cycle + global) et journalisé dans l'`audit_log`. Hard stop si le plafond
+serait dépassé.
+
+Données e-commerce réelles (Shopify, **lecture seule**) :
+
+```bash
+export SHOPIFY_STORE_DOMAIN="ma-boutique.myshopify.com"
+export SHOPIFY_ADMIN_TOKEN="shpat_..."
+```
+
+Le connecteur n'écrit jamais. Toute écriture (créer un produit, changer un
+prix, lancer une promo) reste une action **ROUGE** → file d'approbation.
+
+Reporting Slack / Telegram :
+
+```bash
+export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
+# ou
+export TELEGRAM_BOT_TOKEN="..." ; export TELEGRAM_CHAT_ID="..."
+```
+
+Vérifier l'état des intégrations à tout moment : `python orchestrator/orchestrator.py --org`.
+
+---
+
 ## Passer du dry-run au réel
 
 1. Faire tourner plusieurs cycles en `--dry-run` et **inspecter les briefs**.
 2. Vérifier que le compteur d'exclusion reste à **0** et que les actions ROUGE
    sont bien mises en file.
-3. Quand la confiance est établie, lancer un cycle réel : `--live`
-   (⚠️ les dépenses AMBRE sous plafond deviennent effectives ; les actions
-   ROUGE restent **toujours** en file d'approbation).
-4. Brancher les connecteurs (Slack/Telegram, API) au fur et à mesure, une
-   capacité à la fois.
+3. Fournir les clés voulues (LLM, Shopify, Slack — voir ci-dessus).
+4. **Autoriser explicitement le réel** (garde-fou de passage) :
+
+   ```bash
+   export COMPANY_ALLOW_LIVE=1
+   python orchestrator/orchestrator.py --cycle --live
+   ```
+
+   Sans `COMPANY_ALLOW_LIVE=1`, `--live` est refusé. En réel, les dépenses
+   AMBRE sous plafond deviennent effectives ; les actions ROUGE restent
+   **toujours** en file d'approbation.
+5. Brancher les connecteurs un par un, en vérifiant le brief à chaque étape.
 
 ---
 
