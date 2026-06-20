@@ -15,6 +15,9 @@ reports/*.md
 # (le roster initial de 13 agents EST versionné ; décommenter pour ignorer les spawnés)
 # .claude/agents/!(<roster>).md
 
+# Secrets / configuration locale (ne JAMAIS versionner) — voir .env.example
+.env
+
 # Python
 __pycache__/
 *.pyc

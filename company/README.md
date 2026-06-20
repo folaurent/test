@@ -183,6 +183,24 @@ export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
 export TELEGRAM_BOT_TOKEN="..." ; export TELEGRAM_CHAT_ID="..."
 ```
 
+**Fichier `.env` (recommandé).** Plutôt que des `export`, copie `.env.example`
+en `company/.env` et renseigne tes clés/secrets — il est chargé automatiquement
+au démarrage (`load_env`) et **gitignoré** (jamais poussé).
+
+```bash
+cp .env.example .env   # puis éditer .env
+```
+
+Envoyer le brief sur Slack **à la demande** (notification AMBRE, indépendante
+du mode) :
+
+```bash
+python orchestrator/orchestrator.py --push-brief      # ou /push-brief
+```
+
+En cours de cycle, l'envoi automatique du brief ne se fait qu'en `--live`
+(le dry-run reste sans effet externe).
+
 Vérifier l'état des intégrations à tout moment : `python orchestrator/orchestrator.py --org`.
 
 ---

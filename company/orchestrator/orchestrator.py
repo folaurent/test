@@ -28,6 +28,7 @@ import factory
 import guardrails as G
 import llm
 import memory
+import notify
 import reporting
 from connectors import shopify
 
@@ -38,6 +39,21 @@ ARTIFACTS_DIR = os.path.join(ROOT, "artifacts")
 # Plafonds (cadrage : dry-run pur, plafonds symboliques en garde-fou)
 CYCLE_CAP = 10.0
 GLOBAL_CAP = 100.0
+
+
+def load_env():
+    """Charge company/.env (clés/secrets) dans l'environnement s'il existe.
+    Les variables déjà définies dans l'environnement priment (setdefault)."""
+    envf = os.path.join(ROOT, ".env")
+    if not os.path.exists(envf):
+        return
+    with open(envf, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 # Banque d'idées du CEO (domaine : e-commerce / contenu).
 CEO_IDEA_BANK = [
@@ -465,6 +481,7 @@ def phase_adapt(conn, selected, cycle_id, dry_run, actor="quality-retro"):
 #  Exécution d'un cycle complet
 # ----------------------------------------------------------------------
 def run_cycle(dry_run=True):
+    load_env()
     conn = memory.connect()
 
     # 0. CHECK — kill switch
@@ -506,6 +523,7 @@ def run_cycle(dry_run=True):
 #  CLI
 # ----------------------------------------------------------------------
 def main():
+    load_env()
     p = argparse.ArgumentParser(description="Orchestrateur de l'entreprise IA (Agent CEO).")
     p.add_argument("--cycle", action="store_true", help="exécute un cycle de gestion complet")
     p.add_argument("--bootstrap", action="store_true", help="initialise la DB + synchronise les agents")
@@ -520,6 +538,8 @@ def main():
     p.add_argument("--pause", action="store_true", help="active le kill switch")
     p.add_argument("--resume", action="store_true", help="désactive le kill switch")
     p.add_argument("--brief", action="store_true", help="(re)génère le brief CEO")
+    p.add_argument("--push-brief", dest="push_brief", action="store_true",
+                   help="envoie le brief sur Slack/Telegram (notification AMBRE, à la demande)")
     p.add_argument("--org", action="store_true", help="affiche organigramme + agents + KPI")
     args = p.parse_args()
 
@@ -579,6 +599,17 @@ def main():
         path = reporting.write_brief(conn, cid, "manual-brief",
                                      budget_caps=(CYCLE_CAP, GLOBAL_CAP), dry_run=True)
         print(f"✅ Brief régénéré : {os.path.relpath(path, ROOT)}")
+        conn.close(); return
+    if args.push_brief:
+        # Notification AMBRE vers le canal de l'opérateur (brief informatif).
+        # Envoi réel même hors --live : c'est une notif interne, réversible.
+        conn = memory.connect()
+        cid = memory.cycle_count(conn)
+        text = reporting.build_brief(conn, cid, "push-brief",
+                                     budget_caps=(CYCLE_CAP, GLOBAL_CAP))
+        res = notify.push_brief(text, dry_run=False)
+        memory.audit(conn, "reporting", "BRIEF_PUSHED", {"notify": res}, action_class="AMBER")
+        print(f"📤 Push brief -> {res}")
         conn.close(); return
     if args.cycle:
         # Garde-fou de passage en réel : --live exige une autorisation explicite
