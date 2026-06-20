@@ -1,0 +1,15 @@
+# Déploiement VPS via Docker. Lance : docker compose up -d
+# Prérequis : un fichier .env rempli à côté (secrets) — voir .env.example.
+services:
+  agent:
+    build: .
+    container_name: company-agent
+    env_file: .env          # injecte les secrets (webhook, clé API, bot Slack)
+    environment:
+      - LISTEN_INTERVAL=30
+      - CYCLE_EVERY=3600
+    volumes:
+      - ./state:/app/state  # persiste company.db, curseur Slack, signaux ingérés
+      - ./reports:/app/reports
+      - ./artifacts:/app/artifacts
+    restart: unless-stopped

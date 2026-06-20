@@ -1,0 +1,11 @@
+# Ne pas embarquer les secrets ni l'état runtime dans l'image.
+.env
+state/company.db
+state/hook_audit.log
+state/shopify_signals.json
+state/slack_last_ts
+state/*.log
+reports/*.md
+artifacts/initiative_*/
+__pycache__/
+*.pyc

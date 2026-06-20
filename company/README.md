@@ -102,6 +102,11 @@ persistant + invocations planifiées**.
 
   Ou directement : `python orchestrator/orchestrator.py --cycle --dry-run`.
 
+- **24/7 sur un VPS** (dialogue Slack + cycles, via systemd ou Docker) :
+  voir **`docs/DEPLOY_VPS.md`**. La boucle `scripts/agent_loop.sh` lit Slack et
+  répond toutes les ~30 s, et lance un cycle toutes les ~1 h ; l'état persiste
+  sur le disque du VPS.
+
 Chaque exécution lit l'état depuis `company.db` et reprend où la précédente
 s'est arrêtée.
 
