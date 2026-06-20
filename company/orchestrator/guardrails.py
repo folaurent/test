@@ -27,12 +27,17 @@ GREEN, AMBER, RED = "GREEN", "AMBER", "RED"
 # ----------------------------------------------------------------------
 # Mots-clés déclencheurs ROUGE : tout ce qui touche le monde réel,
 # l'argent, le légal, l'irréversible, la communication externe, la publication.
+# NB : on cible des VERBES d'action (pas des mots-clés de sujet) pour éviter les
+# faux positifs — p.ex. un brouillon local "tunnel panier → paiement" est VERT,
+# alors qu'« encaisser un paiement » est ROUGE.
 RED_KEYWORDS = [
     "send_email", "envoi email", "email client", "publish", "publier", "post ",
-    "tweet", "payment", "paiement", "virement", "wire", "charge", "invoice client",
-    "sign ", "signature", "contract", "contrat", "delete", "supprimer", "drop ",
-    "deploy prod", "production deploy", "refund", "purchase order", "place order",
-    "go live", "send sms", "call customer", "appel client",
+    "tweet", "process payment", "capture payment", "charge card", "encaisser",
+    "prélever", "virement", "wire transfer", "mouvement d'argent", "rembourser",
+    "invoice client", "sign ", "signature", "contract", "contrat",
+    "delete", "supprimer", "drop ", "deploy prod", "production deploy", "refund",
+    "purchase order", "place order", "go live", "send sms", "call customer",
+    "appel client",
 ]
 # Mots-clés AMBRE : externe mais réversible / faible coût sous plafond.
 AMBER_KEYWORDS = [

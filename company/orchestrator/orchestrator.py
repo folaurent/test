@@ -146,6 +146,58 @@ def _ceo_ideate_llm(conn, cycle_id, signals, dry_run, actor="ceo"):
 # ----------------------------------------------------------------------
 #  Phases du cycle
 # ----------------------------------------------------------------------
+def _derive_initiatives_from_signals(signals):
+    """
+    Idéation déterministe PILOTÉE PAR LE DIAGNOSTIC réel (depuis les signaux).
+    Règles transparentes sur le bloc `context` ; renvoie des initiatives reliées
+    aux vrais problèmes de la boutique. Repli si pas de contexte exploitable.
+    """
+    ctx = signals.get("context") or {}
+    funnel = ctx.get("funnel_30d") or {}
+    sources = ctx.get("traffic_sources") or {}
+    catalog = ctx.get("catalog") or {}
+    ideas = []
+
+    sessions = funnel.get("sessions", 0)
+    carts = funnel.get("cart_additions", 0)
+    completed = funnel.get("completed", 0)
+
+    # 1) Conversion nulle malgré des paniers -> réparer le tunnel paiement.
+    if carts and completed == 0:
+        ideas.append({
+            "title": "Réparer le tunnel panier → paiement",
+            "hypothesis": f"{carts} paniers et 0 achat sur 30j : un blocage au checkout "
+                          "(frais, moyens de paiement, bug) tue la conversion.",
+            "owner": "product-rnd", "kpi": "cart_abandon_rate", "skill": None})
+
+    # 2) Trafic faible et quasi exclusivement direct -> lancer l'acquisition SEO.
+    total_src = sum(sources.values()) or 0
+    direct = sources.get("direct", 0)
+    if total_src and (direct / total_src) > 0.8:
+        ideas.append({
+            "title": "Lancer l'acquisition SEO (contenu produit + guides pose)",
+            "hypothesis": "Le trafic est ~exclusivement direct : aucun canal d'acquisition "
+                          "n'apporte de nouveaux visiteurs. Du contenu SEO ciblé "
+                          "(travertin, carrelage, pose) ouvrirait l'organique.",
+            "owner": "growth-marketing", "kpi": "organic_traffic", "skill": None})
+        ideas.append({
+            "title": "Activer un canal social (visuels produits / inspiration déco)",
+            "hypothesis": "Un catalogue déco visuel se prête au social ; 1 seule session "
+                          "social sur 30j = canal inexploité.",
+            "owner": "growth-marketing", "kpi": "organic_traffic",
+            "skill": "social ads & contenu visuel déco"})
+
+    # 3) Catalogue avec produits archivés -> auditer l'indexabilité.
+    if catalog.get("more_pages") or catalog.get("active_products_min"):
+        ideas.append({
+            "title": "Auditer l'indexabilité du catalogue (produits archivés/SEO)",
+            "hypothesis": "Catalogue large mais produits archivés/non indexés = perte de "
+                          "surface organique et de pages d'entrée.",
+            "owner": "operations", "kpi": "organic_traffic", "skill": None})
+
+    return ideas
+
+
 def phase_intake(conn, cycle_id, dry_run, actor="ceo"):
     """Rassemble idées CEO + items en attente, filtre les exclusions (verrou 1)."""
     proposed = memory.list_initiatives(conn, status="proposed")
@@ -157,9 +209,14 @@ def phase_intake(conn, cycle_id, dry_run, actor="ceo"):
         if llm_ideas:
             raw_ideas.extend(llm_ideas)
         else:
-            for title, hyp, owner, kpi, skill in CEO_IDEA_BANK:
-                raw_ideas.append({"title": title, "hypothesis": hyp, "owner": owner,
-                                  "kpi": kpi, "skill": skill})
+            # Idéation déterministe pilotée par le diagnostic réel.
+            derived = _derive_initiatives_from_signals(signals)
+            if derived:
+                raw_ideas.extend(derived)
+            else:
+                for title, hyp, owner, kpi, skill in CEO_IDEA_BANK:
+                    raw_ideas.append({"title": title, "hypothesis": hyp, "owner": owner,
+                                      "kpi": kpi, "skill": skill})
 
     # VERROU 1 — filtre d'exclusion de données à l'INTAKE.
     texts = [f"{i['title']} {i['hypothesis']}" for i in raw_ideas]
@@ -176,18 +233,56 @@ def phase_intake(conn, cycle_id, dry_run, actor="ceo"):
     return {"new": len(clean), "blocked": blocked, "source": signals.get("source")}
 
 
-def phase_triage(conn, actor="chief-of-staff"):
-    """Score chaque initiative proposée : priorité = impact × (1/effort) × (1/risque)."""
+def _triage_llm(conn, cycle_id, proposed, signals, dry_run, actor="chief-of-staff"):
+    """Scoring raisonné par LLM : renvoie {id: {priority, rationale}} ou None."""
+    if not proposed:
+        return None
+    sys = ("Tu es le Chief of Staff. Score chaque initiative par impact × (1/effort) × "
+           "(1/risque) pour une boutique e-commerce. Réponds en JSON: liste d'objets "
+           "{\"id\":<int>, \"priority\":<float 0-3>, \"rationale\":\"...\"}. "
+           "Appuie-toi sur les signaux réels. N'invente aucune donnée.")
+    items = "\n".join(f"#{i['id']} {i['title']} — {i['hypothesis']}" for i in proposed)
+    usr = ("Signaux:\n" + "\n".join(f"- {s}" for s in signals.get("signals", [])) +
+           "\n\nInitiatives:\n" + items)
+    res = llm.complete(sys, usr, dry_run=dry_run, max_tokens=800)
+    _charge_llm(conn, cycle_id, res, actor)
+    if not res:
+        return None
+    import json as _json
+    try:
+        text = res["text"]
+        start, end = text.find("["), text.rfind("]")
+        rows = _json.loads(text[start:end + 1]) if start >= 0 else []
+        out = {}
+        for r in rows:
+            if isinstance(r, dict) and "id" in r:
+                out[int(r["id"])] = {"priority": round(float(r.get("priority", 0)), 3),
+                                     "rationale": str(r.get("rationale", ""))[:300]}
+        return out or None
+    except Exception:
+        return None
+
+
+def phase_triage(conn, cycle_id, dry_run, actor="chief-of-staff"):
+    """Score chaque initiative proposée. LLM raisonné si live, sinon heuristique."""
     proposed = memory.list_initiatives(conn, status="proposed")
+    signals = shopify.fetch_signals(dry_run=dry_run)
+    llm_scores = _triage_llm(conn, cycle_id, proposed, signals, dry_run, actor)
     for i, init in enumerate(proposed):
-        # Heuristique déterministe et transparente (placeholder du LLM).
-        impact = 0.9 - 0.1 * (i % 4)
-        effort = 0.4 + 0.1 * (i % 3)
-        risk = 0.3 + 0.1 * (i % 2)
-        priority = round(impact / (effort * (1 + risk)), 3)
-        memory.set_initiative(conn, init["id"], priority=priority, status="planned")
-    memory.audit(conn, actor, "TRIAGE", {"scored": len(proposed)})
-    return {"scored": len(proposed)}
+        if llm_scores and init["id"] in llm_scores:
+            sc = llm_scores[init["id"]]
+            memory.set_initiative(conn, init["id"], priority=sc["priority"], status="planned",
+                                  rationale=sc["rationale"] or init.get("rationale"))
+        else:
+            # Heuristique déterministe et transparente (repli sans LLM).
+            impact = 0.9 - 0.1 * (i % 4)
+            effort = 0.4 + 0.1 * (i % 3)
+            risk = 0.3 + 0.1 * (i % 2)
+            priority = round(impact / (effort * (1 + risk)), 3)
+            memory.set_initiative(conn, init["id"], priority=priority, status="planned")
+    memory.audit(conn, actor, "TRIAGE",
+                 {"scored": len(proposed), "reasoned": bool(llm_scores)})
+    return {"scored": len(proposed), "reasoned": bool(llm_scores)}
 
 
 def phase_plan(conn, cycle_id, actor="ceo", max_initiatives=2):
@@ -309,15 +404,51 @@ def phase_measure(conn, dry_run, actor="data-analytics"):
     return {"kpis": len(KPI_TARGETS), "source": signals.get("source")}
 
 
-def phase_adapt(conn, selected, actor="quality-retro"):
-    """Rétrospective : leçons + re-score des agents."""
+def _retro_llm(conn, cycle_id, selected, signals, dry_run, actor="quality-retro"):
+    """Rétrospective raisonnée par LLM : renvoie {id: {learning, action_taken}} ou None."""
+    if not selected:
+        return None
+    sys = ("Tu es l'agent quality-retro. Pour chaque initiative close, tire UNE leçon "
+           "factuelle et réutilisable. Réponds en JSON: liste d'objets "
+           "{\"id\":<int>, \"learning\":\"...\", \"action_taken\":\"...\"}. "
+           "Faits seulement, pas d'opinion ni de fabrication.")
+    items = "\n".join(f"#{i['id']} {i['title']}" for i in selected)
+    usr = ("Signaux:\n" + "\n".join(f"- {s}" for s in signals.get("signals", [])) +
+           "\n\nInitiatives closes ce cycle:\n" + items)
+    res = llm.complete(sys, usr, dry_run=dry_run, max_tokens=700)
+    _charge_llm(conn, cycle_id, res, actor)
+    if not res:
+        return None
+    import json as _json
+    try:
+        text = res["text"]
+        start, end = text.find("["), text.rfind("]")
+        rows = _json.loads(text[start:end + 1]) if start >= 0 else []
+        return {int(r["id"]): {"learning": str(r.get("learning", ""))[:300],
+                               "action_taken": str(r.get("action_taken", ""))[:300]}
+                for r in rows if isinstance(r, dict) and "id" in r} or None
+    except Exception:
+        return None
+
+
+def phase_adapt(conn, selected, cycle_id, dry_run, actor="quality-retro"):
+    """Rétrospective : leçons (LLM raisonné ou canned) + re-score des agents."""
+    signals = shopify.fetch_signals(dry_run=dry_run)
+    llm_lessons = _retro_llm(conn, cycle_id, selected, signals, dry_run, actor)
     for init in selected:
         memory.set_initiative(conn, init["id"], status="closed",
-                              result="Cycle clos (dry-run) — livrable produit, publication en attente d'approbation.")
-        memory.add_lesson(conn, init["id"],
-                          observation=f"Initiative « {init['title']} » exécutée en dry-run.",
-                          learning="Les actions de publication sont bien interceptées en ROUGE.",
-                          action_taken="Mise en file d'approbation, aucune publication automatique.")
+                              result="Cycle clos — livrable produit, publication en attente d'approbation.")
+        if llm_lessons and init["id"] in llm_lessons:
+            les = llm_lessons[init["id"]]
+            memory.add_lesson(conn, init["id"],
+                              observation=f"Initiative « {init['title']} » (rétro raisonnée).",
+                              learning=les["learning"] or "—",
+                              action_taken=les["action_taken"] or "—")
+        else:
+            memory.add_lesson(conn, init["id"],
+                              observation=f"Initiative « {init['title']} » exécutée en dry-run.",
+                              learning="Les actions de publication sont bien interceptées en ROUGE.",
+                              action_taken="Mise en file d'approbation, aucune publication automatique.")
     # Re-score simple : agents avec tâches terminées montent légèrement.
     for a in memory.list_agents(conn):
         done = memory.fetchone(conn,
@@ -325,8 +456,9 @@ def phase_adapt(conn, selected, actor="quality-retro"):
                                (a["name"],))
         score = min(1.0, 0.5 + 0.05 * (done["c"] if done else 0))
         memory.set_agent_score(conn, a["name"], round(score, 3))
-    memory.audit(conn, actor, "ADAPT", {"closed": len(selected)})
-    return {"closed": len(selected)}
+    memory.audit(conn, actor, "ADAPT",
+                 {"closed": len(selected), "reasoned": bool(llm_lessons)})
+    return {"closed": len(selected), "reasoned": bool(llm_lessons)}
 
 
 # ----------------------------------------------------------------------
@@ -347,13 +479,13 @@ def run_cycle(dry_run=True):
     memory.audit(conn, "orchestrator", "CYCLE_START", {"cycle_id": cycle_id, "mode": mode})
 
     intake = phase_intake(conn, cycle_id, dry_run)
-    phase_triage(conn)
+    phase_triage(conn, cycle_id, dry_run)
     selected = phase_plan(conn, cycle_id)
     new_agents = phase_dispatch(conn, selected)
     phase_execute(conn, cycle_id, dry_run)
     phase_review(conn)
     phase_measure(conn, dry_run)
-    phase_adapt(conn, selected)
+    phase_adapt(conn, selected, cycle_id, dry_run)
 
     path = reporting.write_brief(conn, cycle_id, mode, new_agents,
                                  budget_caps=(CYCLE_CAP, GLOBAL_CAP), dry_run=dry_run)

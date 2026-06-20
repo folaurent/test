@@ -130,7 +130,7 @@ reste donc toujours sans effet de bord externe.
 
 | Intégration | Module | Active si | Comportement par défaut |
 |---|---|---|---|
-| **LLM (Claude)** | `orchestrator/llm.py` | `ANTHROPIC_API_KEY` + SDK `anthropic` + `--live` | Stub déterministe (idéation depuis la banque) |
+| **LLM (Claude)** | `orchestrator/llm.py` | `ANTHROPIC_API_KEY` + SDK `anthropic` + `--live` | Repli déterministe : idéation **pilotée par le diagnostic** des signaux, triage heuristique, rétro canned |
 | **Shopify** | `orchestrator/connectors/shopify.py` | `SHOPIFY_STORE_DOMAIN` + `SHOPIFY_ADMIN_TOKEN` + `--live` | KPI simulés |
 | **Slack/Telegram** | `orchestrator/notify.py` | webhook/token présents + `--live` | Brief en fichier seul |
 
@@ -141,6 +141,12 @@ pip install -r requirements.txt          # installe le SDK anthropic
 export ANTHROPIC_API_KEY="sk-ant-..."
 export COMPANY_LLM_MODEL="claude-opus-4-8"   # optionnel (défaut)
 ```
+
+Le LLM est branché sur 3 phases — **idéation** (INTAKE), **triage**
+(priorisation raisonnée) et **rétro** (leçons) — chacune avec repli
+déterministe. En l'absence de clé, l'idéation reste pertinente car **dérivée
+du diagnostic réel** des signaux (ex. conversion 0 % → « réparer le tunnel
+panier→paiement » ; trafic ~100 % direct → « lancer l'acquisition SEO »).
 
 Un appel LLM est classé **AMBRE** : son coût estimé est imputé au budget
 (cycle + global) et journalisé dans l'`audit_log`. Hard stop si le plafond
