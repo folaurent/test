@@ -68,8 +68,8 @@ def _post_json(url: str, payload: dict) -> int:
 
 def _send_slack(text: str) -> str:
     url = os.environ["SLACK_WEBHOOK_URL"]
-    # Slack tronque très long ; on borne raisonnablement.
-    code = _post_json(url, {"text": text[:3500]})
+    # Marge confortable pour ne pas couper une réponse complète de l'agent.
+    code = _post_json(url, {"text": text[:8000]})
     return f"http {code}"
 
 

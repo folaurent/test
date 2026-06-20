@@ -144,6 +144,9 @@ def respond(conn, message: str, dry_run: bool = False, actor="ceo"):
             f"Arbitrages que je viens d'appliquer : "
             f"{', '.join(f'#{a}:{d}' for a, d in actions) or 'aucun'}.\n"
             "Réponds-lui naturellement, en gardant ton expertise.")
-    res = llm.complete(PERSONA, user, dry_run=dry_run, max_tokens=600)
+    # max_tokens large + effort bas : pour du dialogue, on veut une réponse
+    # COMPLÈTE et rapide (pas de longue réflexion qui mange le budget de sortie
+    # et tronque le texte visible).
+    res = llm.complete(PERSONA, user, dry_run=dry_run, max_tokens=1500, effort="low")
     reply = res["text"] if res else _fallback_reply(conn, ctx, message, actions)
     return reply, actions
