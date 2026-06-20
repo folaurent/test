@@ -201,6 +201,24 @@ python orchestrator/orchestrator.py --push-brief      # ou /push-brief
 En cours de cycle, l'envoi automatique du brief ne se fait qu'en `--live`
 (le dry-run reste sans effet externe).
 
+**L'agent te parle sur Slack.** Trois canaux de communication agent → opérateur :
+
+```bash
+# message libre
+python orchestrator/orchestrator.py --say "Besoin d'un arbitrage sur l'initiative #3"   # /say
+
+# brief complet à la demande
+python orchestrator/orchestrator.py --push-brief                                          # /push-brief
+
+# alerte automatique de fin de cycle (cycle terminé + décisions ROUGE en attente)
+COMPANY_SLACK_ALERTS=1 python orchestrator/orchestrator.py --cycle --dry-run
+```
+
+`COMPANY_SLACK_ALERTS=1` active l'alerte même en dry-run (sinon elle ne part
+qu'en `--live`). Tous ces envois sont **AMBRE** (notification vers ton propre
+canal, réversible) et journalisés. La communication **Slack → agent** (te
+répondre depuis Slack) nécessiterait une app Slack (Events API) — non incluse.
+
 Vérifier l'état des intégrations à tout moment : `python orchestrator/orchestrator.py --org`.
 
 ---

@@ -480,6 +480,35 @@ def phase_adapt(conn, selected, cycle_id, dry_run, actor="quality-retro"):
 # ----------------------------------------------------------------------
 #  Exécution d'un cycle complet
 # ----------------------------------------------------------------------
+def _slack_cycle_alert(conn, cycle_id, mode, dry_run):
+    """L'agent prévient l'opérateur sur Slack en fin de cycle.
+
+    Déclenché si COMPANY_SLACK_ALERTS=1 (utile en dry-run) ou en --live.
+    Notification AMBRE, journalisée. Le dry-run reste sans envoi par défaut."""
+    alerts_on = os.environ.get("COMPANY_SLACK_ALERTS") == "1" or not dry_run
+    if not alerts_on:
+        return
+    approvals = memory.list_approvals(conn, "pending")
+    metrics = memory.latest_metrics(conn)
+    reds = [m["name"] for m in metrics
+            if m["target"] and ((m["name"] in reporting.LOWER_IS_BETTER and m["value"] > m["target"])
+                                or (m["name"] not in reporting.LOWER_IS_BETTER and m["value"] < 0.7 * m["target"]))]
+    lines = [f"🤖 *CEO — Cycle #{memory.cycle_count(conn)} terminé* ({mode})"]
+    if reds:
+        lines.append("📉 KPI en alerte : " + ", ".join(reds))
+    if approvals:
+        lines.append(f"🔴 *{len(approvals)} décision(s) en attente d'arbitrage* :")
+        for a in approvals[:8]:
+            lines.append(f"   • #{a['id']} — {a['summary']}")
+        lines.append("Réponds : `/approve <id>` ou `/reject <id>`.")
+    else:
+        lines.append("✅ Aucune décision en attente.")
+    lines.append(f"🛡️ Exclusion de données : {memory.total_exclusion_attempts(conn)} (cible 0)")
+    res = notify.send_message("\n".join(lines), dry_run=False)
+    memory.audit(conn, "ceo", "SLACK_ALERT", {"approvals": len(approvals), "notify": res},
+                 action_class="AMBER")
+
+
 def run_cycle(dry_run=True):
     load_env()
     conn = memory.connect()
@@ -509,6 +538,9 @@ def run_cycle(dry_run=True):
     memory.end_cycle(conn, cycle_id,
                      f"intake={intake['new']} selected={len(selected)} new_agents={len(new_agents)}")
     memory.audit(conn, "orchestrator", "CYCLE_END", {"cycle_id": cycle_id, "report": path})
+
+    # L'agent prévient l'opérateur sur Slack (alertes / arbitrages).
+    _slack_cycle_alert(conn, cycle_id, mode, dry_run)
 
     print(f"✅ Cycle #{memory.cycle_count(conn)} terminé ({mode}).")
     print(f"   Initiatives lancées : {len(selected)} | Nouveaux agents : {len(new_agents)}")
@@ -540,6 +572,8 @@ def main():
     p.add_argument("--brief", action="store_true", help="(re)génère le brief CEO")
     p.add_argument("--push-brief", dest="push_brief", action="store_true",
                    help="envoie le brief sur Slack/Telegram (notification AMBRE, à la demande)")
+    p.add_argument("--say", metavar="MESSAGE",
+                   help="l'agent envoie un message libre sur Slack/Telegram")
     p.add_argument("--org", action="store_true", help="affiche organigramme + agents + KPI")
     args = p.parse_args()
 
@@ -599,6 +633,13 @@ def main():
         path = reporting.write_brief(conn, cid, "manual-brief",
                                      budget_caps=(CYCLE_CAP, GLOBAL_CAP), dry_run=True)
         print(f"✅ Brief régénéré : {os.path.relpath(path, ROOT)}")
+        conn.close(); return
+    if args.say:
+        conn = memory.connect()
+        res = notify.send_message(f"🤖 {args.say}", dry_run=False)
+        memory.audit(conn, "ceo", "SLACK_SAY", {"message": args.say, "notify": res},
+                     action_class="AMBER")
+        print(f"📤 {res}")
         conn.close(); return
     if args.push_brief:
         # Notification AMBRE vers le canal de l'opérateur (brief informatif).

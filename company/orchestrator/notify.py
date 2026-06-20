@@ -50,6 +50,15 @@ def push_brief(text: str, dry_run: bool = True) -> dict:
     return {"status": "sent", "results": results}
 
 
+def send_message(text: str, dry_run: bool = True) -> dict:
+    """Notification AMBRE générique vers l'opérateur (Slack/Telegram).
+
+    C'est la « voix » de l'agent : alertes, messages, demandes d'arbitrage.
+    Même règles que push_brief (n'envoie que si une cible est configurée ;
+    en dry-run, journalise ce qui SERAIT envoyé sans appel réseau)."""
+    return push_brief(text, dry_run=dry_run)
+
+
 def _post_json(url: str, payload: dict) -> int:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
