@@ -112,3 +112,27 @@
 - Affiner le sélecteur de variantes et le calculateur.
 
 *Rapport mis à jour à chaque passage de la boucle.*
+
+---
+
+## 7. Audit des apps (mise à jour)
+
+Apps détectées qui **injectent du code** (app blocks / embeds) :
+
+| App | Rôle | Utilisée ? | Reco | Risque |
+|---|---|---|---|---|
+| PageFly | Page builder | ❌ 0 page construite | Désinstaller | Nul |
+| Shine Trust | Badges/urgence/countdown/pop-up/bandeau livraison/cookie/sticky cart/bought-together/buy-x-get-y (12 fonctions) | Beaucoup de doublons natifs | Auditer son dashboard / dégraisser / désinstaller | Moyen |
+| Trustoo (métachamps `vstar`) | Avis | 0 avis | Garder (app avis unique) | — |
+| Loox | Avis/photos (2e système ?) | À vérifier | Si doublon → en retirer un | Faible |
+| BSS Product Options (optis) | Options produit | Variantes natives utilisées | Vérifier puis retirer | Faible |
+| Klaviyo | Email/SMS | À confirmer | Garder si utilisé | dépend |
+| SEOAnt (seowill) | SEO | Gère peut-être le JSON-LD | NE PAS retirer avant vérif | Moyen |
+| Shopify Inbox | Chat | À confirmer | Garder si utilisé | léger |
+| Pixel Facebook / TikTok | Tracking pub | À confirmer | Garder si pubs actives | faible |
+
+**Correction du §2/§3** : slick, swiper, gsap, fancybox, lazysizes ne sont **pas des apps** mais des **librairies du thème Halo** (non retirables séparément).
+
+**Priorité** : 1) PageFly (désinstaller, gain sûr) · 2) Shine Trust (dégraisser) · 3) consolider avis (Trustoo OU Loox) · 4) BSS Options · 5) pixels/Klaviyo si inutilisés · 6) vérifier SEOAnt avant de toucher.
+
+*Note : la désinstallation se fait dans l'admin Shopify (pas via l'outil).*
