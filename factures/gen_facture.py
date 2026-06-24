@@ -208,10 +208,10 @@ MENTIONS = (
     "compte de la société JONCTION (SAS) en formation ; acte destiné à être "
     "repris par la société lors de son immatriculation.\n"
     "{tva}\n"
-    "En cas de retard de paiement : pénalités au taux de trois fois le taux "
-    "d'intérêt légal et indemnité forfaitaire pour frais de recouvrement de "
-    "40 EUR (art. L441-10 et D441-5 du Code de commerce). Aucun escompte "
-    "pour paiement anticipé."
+    "En cas de retard de paiement : pénalités de retard au taux de trois "
+    "fois le taux d'intérêt légal, exigibles sans rappel, et indemnité "
+    "forfaitaire pour frais de recouvrement de 40 EUR (art. L441-10 et "
+    "D441-5 du Code de commerce). Aucun escompte pour paiement anticipé."
 )
 MENTION_TVA_FRANCHISE = "TVA non applicable, article 293 B du Code général des impôts."
 
@@ -221,16 +221,16 @@ HORAIRES = ("Horaires : 5 h/jour, du lundi au vendredi "
 juin = {
     "num": "2026-001", "date": "30/06/2026", "echeance": "30/07/2026",
     "periode": "   Période : du 19/06/2026 au 30/06/2026       "
-               "Forfait mensuel 600 EUR HT - prorata 12/30 jours",
+               "Forfait mensuel 600 EUR HT - prorata 7/21 jours ouvrés",
     "items": [{
         "title": "Prestation d'assistanat commercial - Juin 2026",
         "desc": "Mise à disposition d'un assistant commercial basé à "
-                "Madagascar.\n" + HORAIRES + "\nProrata du 19 au "
-                "30/06/2026 : 12/30 jours (hors 26/06, Indépendance "
-                "malgache).",
-        "qte": "1", "pu": "240,00", "tot": "240,00"}],
-    "total_ht": "240,00 EUR", "tva_label": "TVA (non applicable)",
-    "tva": "0,00 EUR", "ttc": "240,00 EUR",
+                "Madagascar.\n" + HORAIRES + "\n7 jours ouvrés travaillés "
+                "(19 au 30/06, hors 26/06 - Indépendance malgache) sur 21 "
+                "jours ouvrés de juin : prorata 7/21 du forfait.",
+        "qte": "1", "pu": "200,00", "tot": "200,00"}],
+    "total_ht": "200,00 EUR", "tva_label": "TVA (non applicable)",
+    "tva": "0,00 EUR", "ttc": "200,00 EUR",
     "mentions": MENTIONS.format(tva=MENTION_TVA_FRANCHISE),
     "out": DIR + "Facture_2026-001_IL-DISTRIBUTION_juin.pdf",
 }
@@ -241,8 +241,8 @@ juillet = {
     "items": [{
         "title": "Prestation d'assistanat commercial - Juillet 2026",
         "desc": "Mise à disposition d'un assistant commercial basé à "
-                "Madagascar.\n" + HORAIRES + "\nForfait mensuel complet "
-                "(hors 14/07, fête nationale française).",
+                "Madagascar.\n" + HORAIRES + "\nForfait mensuel complet : "
+                "22 jours ouvrés (hors 14/07, fête nationale française).",
         "qte": "1", "pu": "600,00", "tot": "600,00"}],
     "total_ht": "600,00 EUR", "tva_label": "TVA (non applicable)",
     "tva": "0,00 EUR", "ttc": "600,00 EUR",
