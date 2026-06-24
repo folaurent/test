@@ -497,7 +497,10 @@ def _slack_cycle_alert(conn, cycle_id, mode, dry_run):
     """L'agent prévient l'opérateur sur Slack en fin de cycle.
 
     Déclenché si COMPANY_SLACK_ALERTS=1 (utile en dry-run) ou en --live.
-    Notification AMBRE, journalisée. Le dry-run reste sans envoi par défaut."""
+    Anti-spam : n'envoie QUE si l'état actionnable (décisions en attente,
+    KPI en alerte, tentatives d'exclusion) a CHANGÉ depuis la dernière alerte.
+    Sinon, l'alerte est journalisée comme « ignorée » sans appel réseau.
+    Le dry-run reste sans envoi par défaut."""
     alerts_on = os.environ.get("COMPANY_SLACK_ALERTS") == "1" or not dry_run
     if not alerts_on:
         return
@@ -506,6 +509,26 @@ def _slack_cycle_alert(conn, cycle_id, mode, dry_run):
     reds = [m["name"] for m in metrics
             if m["target"] and ((m["name"] in reporting.LOWER_IS_BETTER and m["value"] > m["target"])
                                 or (m["name"] not in reporting.LOWER_IS_BETTER and m["value"] < 0.7 * m["target"]))]
+    excl = memory.total_exclusion_attempts(conn)
+
+    # Anti-spam : signature de l'état actionnable. Si elle est identique à la
+    # dernière alerte envoyée, on n'envoie RIEN (évite de répéter les mêmes
+    # décisions à chaque cycle). Une nouvelle alerte ne part que si un élément
+    # change réellement (décision ajoutée/traitée, KPI, exclusion).
+    signature = ("A:" + ",".join(sorted(str(a["id"]) for a in approvals))
+                 + "|K:" + ",".join(sorted(reds)) + "|X:" + str(excl))
+    sig_path = os.path.join(memory.STATE_DIR, "last_slack_alert")
+    try:
+        with open(sig_path, "r", encoding="utf-8") as f:
+            last_sig = f.read().strip()
+    except OSError:
+        last_sig = ""
+    if signature == last_sig:
+        memory.audit(conn, "ceo", "SLACK_ALERT_SKIPPED",
+                     {"reason": "etat inchange", "approvals": len(approvals)},
+                     action_class="GREEN")
+        return
+
     lines = [f"🤖 *CEO — Cycle #{memory.cycle_count(conn)} terminé* ({mode})"]
     if reds:
         lines.append("📉 KPI en alerte : " + ", ".join(reds))
@@ -516,8 +539,13 @@ def _slack_cycle_alert(conn, cycle_id, mode, dry_run):
         lines.append("Réponds : `/approve <id>` ou `/reject <id>`.")
     else:
         lines.append("✅ Aucune décision en attente.")
-    lines.append(f"🛡️ Exclusion de données : {memory.total_exclusion_attempts(conn)} (cible 0)")
+    lines.append(f"🛡️ Exclusion de données : {excl} (cible 0)")
     res = notify.send_message("\n".join(lines), dry_run=False)
+    try:
+        with open(sig_path, "w", encoding="utf-8") as f:
+            f.write(signature + "\n")
+    except OSError:
+        pass
     memory.audit(conn, "ceo", "SLACK_ALERT", {"approvals": len(approvals), "notify": res},
                  action_class="AMBER")
 
