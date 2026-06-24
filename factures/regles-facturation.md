@@ -36,6 +36,18 @@
 ## Numérotation
 - Séquentielle continue : `2026-001`, `2026-002`, …
 
+## Facturation électronique (réforme France)
+La franchise en base **n'exonère pas** de la réforme (assujettis non-redevables inclus).
+- **1ᵉʳ sept. 2026** : obligation de **recevoir** des factures électroniques (toutes
+  entreprises) → Jonction doit être raccordée à une plateforme (PPF ou Plateforme
+  Agréée) et inscrite à l'annuaire avant cette date.
+- **1ᵉʳ sept. 2027** : obligation d'**émettre** en électronique pour les TPE/PME
+  (dont Jonction). D'ici là, le PDF classique envoyé par e-mail reste valable.
+- Format cible : **Factur-X** (PDF + XML structuré intégré), via PPF ou Plateforme
+  Agréée (ex-« PDP »). Un PDF simple ne suffit pas.
+- ⚠️ Une facture électronique conforme exige le **SIRET** → possible seulement
+  après immatriculation. Vérifier si **Qonto** couvre l'émission Factur-X.
+
 ## Coordonnées émetteur (à jour)
 - JONCTION — SAS en cours de formation — Capital 500 €
 - Siège : 59, rue de Ponthieu, 75008 Paris
