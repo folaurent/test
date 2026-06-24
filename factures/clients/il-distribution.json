@@ -1,0 +1,28 @@
+{
+  "ref": "IL-DISTRIBUTION",
+  "raison_sociale": "IL DISTRIBUTION",
+  "forme": "SAS à associé unique",
+  "capital": "131 000 EUR",
+  "adresse": ["42, rue de Maisse", "91820 Boutigny-sur-Essonne"],
+  "siren": "912 232 832 - RCS Evry",
+  "contact": "Mme Jennifer DA COSTA ALVES",
+  "contact_role": "Présidente",
+  "type": "B2B",
+  "prestataire": {
+    "intitule": "Mise à disposition d'un assistant commercial basé à Madagascar.",
+    "horaires": "Horaires : 5 h/jour, du lundi au vendredi (8h30-11h00 / 14h00-16h30).",
+    "jours_feries_pays": ["MG", "FR"]
+  },
+  "mission": {
+    "debut": "2026-06-19",
+    "fin": "2026-07-31",
+    "forfait_mensuel_eur": 600,
+    "decoupage": "mensuel"
+  },
+  "facturation": {
+    "annee": 2026,
+    "num_depart": 1,
+    "echeance_jours": 30,
+    "tva": "franchise"
+  }
+}

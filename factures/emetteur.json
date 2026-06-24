@@ -1,0 +1,15 @@
+{
+  "nom": "JONCTION",
+  "forme": "SAS en cours de formation",
+  "forme_courte": "SAS",
+  "tagline": "Prestations d'assistanat commercial",
+  "capital": "500 EUR",
+  "adresse": ["59, rue de Ponthieu", "75008 Paris"],
+  "tel": "+33 6 27 89 37 42",
+  "siren_mention": "en cours d'immatriculation (RCS de Paris)",
+  "representant": "M. Laurent FOURNIER",
+  "greffe": "Paris",
+  "reglement_note": "Coordonnées bancaires communiquées séparément - compte professionnel en cours d'ouverture.",
+  "iban": "",
+  "bic": ""
+}

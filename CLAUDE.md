@@ -29,11 +29,20 @@ jours ouvrés, prorata des mois partiels, TVA franchise (art. 293 B), mentions
 - [ ] **Paramètres** : n° (séquentiel `2026-00X`), date, échéance (défaut 30 j),
       IBAN (si dispo).
 
-## 3. Générer
-- Script : `factures/gen_facture.py` (fpdf2).
-- ⚠️ Police Helvetica/latin-1 : **accents FR OK**, mais **symbole € NON supporté**
-  → écrire `EUR`. Tirets longs `—`/`–` et apostrophes typographiques `’` interdits
-  (hors latin-1) → utiliser `-` et `'`.
-- Pas de moteur de rendu image ici : **vérifier en ré-extrayant le texte** du PDF
-  (`pypdf`).
+## 3. Générer (outil piloté par les données)
+- Émetteur fixe : `factures/emetteur.json`. **Un fichier par client** :
+  `factures/clients/<client>.json` (modèle : `clients/il-distribution.json`).
+- Moteur : `factures/facturation.py` — calcule **tout seul** une facture par mois
+  (forfait mensuel, prorata en jours ouvrés hors fériés du pays du prestataire),
+  numérote, date, et produit un PDF par mois :
+  ```
+  cd factures && python3 facturation.py clients/<client>.json
+  ```
+- **Nouveau client** = créer `clients/<client>.json` (copier le modèle, remplir la
+  fiche d'intake du §2) puis lancer la commande. Rien à coder.
+- Penser à compléter le tableau des **jours fériés** (`FERIES_ISO`) pour chaque
+  nouvelle année.
+- ⚠️ Police Helvetica/latin-1 : accents FR OK, `€` NON supporté → `EUR` (le moteur
+  assainit automatiquement `€ — – ’` …).
+- Pas de moteur de rendu image ici : **vérifier en ré-extrayant le texte** (`pypdf`).
 - Livrer le PDF (SendUserFile) **et** committer dans `factures/`.
