@@ -16,12 +16,17 @@
 - Mois complet = forfait plein (ex. juillet 2026 : 22 jours ouvrés → 600 €).
 
 ## TVA
-- Société **en cours d'immatriculation** (pas de n° TVA) → **franchise en base,
-  art. 293 B du CGI** : pas de TVA, HT = TTC.
-- Prestation **B2B à un client français** = TVA française **en principe**
-  (lieu d'imposition = établissement du preneur, art. 259-1° du CGI).
-  L'« offshore » (prestataire à Madagascar) **n'exonère pas**.
-- Dès l'immatriculation, si **régime réel** : ajouter la **TVA à 20 %**.
+- **Décision 2026 : franchise en base** (art. 293 B du CGI) — pas de TVA,
+  HT = TTC. Réévaluation l'an prochain.
+  > ⚠️ Valable tant que le CA prestations reste **sous le seuil**
+  > (~37 500 €/an, tolérance ~41 250 € — seuils à confirmer, susceptibles
+  > d'évoluer). Au-delà, la **TVA à 20 %** devient obligatoire en cours d'année.
+- Rappel : prestation **B2B à un client français** = TVA française **en
+  principe** (lieu d'imposition = établissement du preneur, art. 259-1° CGI).
+  L'« offshore » (prestataire à Madagascar) **n'exonère pas** — c'est bien la
+  franchise (et non l'offshore) qui justifie l'absence de TVA.
+- Dès l'immatriculation, si passage au **régime réel** : ajouter la **TVA 20 %**
+  + le **n° de TVA intracommunautaire**.
 
 ## Société en cours de formation
 - Factures émises par **M. Laurent FOURNIER**, « au nom et pour le compte de la
