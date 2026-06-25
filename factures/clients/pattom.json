@@ -1,0 +1,33 @@
+{
+  "ref": "PATTOM",
+  "raison_sociale": "PATTOM",
+  "forme": "SARL",
+  "capital": "14 000 EUR",
+  "adresse": ["ZAC de la Montvrain", "1 rue Louise de Vilmorin", "91540 Mennecy"],
+  "siren": "752 492 462 - RCS Evry",
+  "contact": "M. Patrick Da Cunha",
+  "contact_role": "Gérant",
+  "type": "B2B",
+  "_note_tarif": "Téléprospecteur : 1 000 EUR HT/mois négocié (catalogue 1 500 EUR HT). Mémorisé pour les prochains devis PATTOM.",
+  "prestataire": {
+    "libelle": "Prestation de téléprospection",
+    "intitule": "Mise à disposition de 2 téléprospecteurs/trices basés à Madagascar.",
+    "horaires": "Horaires : 7 h/jour, du lundi au vendredi.",
+    "jours_feries_pays": ["MG"],
+    "nb_ressources": 2,
+    "unite": "téléprospecteur"
+  },
+  "mission": {
+    "debut": "2026-06-29",
+    "fin": "2026-07-29",
+    "forfait_mensuel_eur": 1000,
+    "tarif_standard_eur": 1500,
+    "decoupage": "global"
+  },
+  "facturation": {
+    "annee": 2026,
+    "num_depart": 3,
+    "echeance_jours": 30,
+    "tva": "franchise"
+  }
+}

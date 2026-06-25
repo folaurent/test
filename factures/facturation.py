@@ -5,12 +5,16 @@
 Usage :
     python3 facturation.py clients/<client>.json [--outdir DIR]
 
-Lit `emetteur.json` (Jonction, fixe) + le fichier client, calcule une facture
-par mois (forfait mensuel, prorata en JOURS OUVRES hors feries du pays du
-prestataire) et produit un PDF par mois dans le dossier de sortie.
+Lit `emetteur.json` (Jonction, fixe) + le fichier client, calcule les factures
+(forfait mensuel par ressource, prorata en JOURS OUVRES hors feries du pays du
+prestataire) et produit les PDF.
 
-Police Helvetica/latin-1 : accents FR OK, symbole EUR (le "€" n'est pas
-supporte -> on ecrit "EUR"). Les caracteres hors latin-1 sont assainis.
+Decoupage (client.mission.decoupage) :
+  - "mensuel" (defaut) : une facture par mois calendaire, prorata des mois partiels.
+  - "global"           : une seule facture pour toute la mission, au forfait plein.
+
+Police Helvetica/latin-1 : accents FR OK, "€" non supporte -> on ecrit "EUR".
+Les caracteres hors latin-1 sont assainis automatiquement.
 """
 import argparse
 import calendar
@@ -22,7 +26,6 @@ from fpdf import FPDF, XPos, YPos
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
-# --------------------------------------------------------------- Palette
 NAVY = (28, 46, 79)
 LIGHT = (242, 244, 247)
 GREY = (110, 116, 124)
@@ -48,8 +51,8 @@ FERIES_ISO = {
 
 def latin1_safe(s):
     repl = {"€": "EUR", "—": "-", "–": "-", "’": "'", "‘": "'", "“": '"',
-            "”": '"', "œ": "oe", "Œ": "OE", "…": "...", " ": " ",
-            " ": " ", "‑": "-"}
+            "”": '"', "œ": "oe", "Œ": "OE", "…": "...", " ": " ",
+            " ": " ", "‑": "-"}
     for a, b in repl.items():
         s = s.replace(a, b)
     return s
@@ -105,14 +108,60 @@ def months_between(d1, d2):
 def compute_invoices(emetteur, client):
     mi = client["mission"]
     fa = client["facturation"]
+    pr = client["prestataire"]
     debut, fin = parse_d(mi["debut"]), parse_d(mi["fin"])
-    forfait = float(mi["forfait_mensuel_eur"])
+    forfait = float(mi["forfait_mensuel_eur"])          # par ressource / mois
+    nb = int(pr.get("nb_ressources", 1))
+    libelle = pr.get("libelle", "Prestation d'assistanat commercial")
+    unite = pr.get("unite", "personne")
+    standard = mi.get("tarif_standard_eur")
+    decoupage = mi.get("decoupage", "mensuel")
     years = list(range(debut.year, fin.year + 1))
-    feries = feries_set(client["prestataire"].get("jours_feries_pays", []), years)
+    feries = feries_set(pr.get("jours_feries_pays", []), years)
     b2b = client.get("type", "B2B").upper() == "B2B"
+    franchise = fa.get("tva", "franchise") == "franchise"
+    ech_j = fa.get("echeance_jours", 30)
+
+    tnote = ""
+    if standard:
+        tnote = (f"\nTarif négocié : {fmt(forfait)} EUR HT/{unite} "
+                 f"(au lieu de {fmt(float(standard))} EUR HT).")
+
+    def make(num, we, montant, title, detail, periode, mois_min):
+        return {
+            "num": f"{fa['annee']}-{num:03d}",
+            "date": we.strftime("%d/%m/%Y"),
+            "echeance": (we + timedelta(days=ech_j)).strftime("%d/%m/%Y"),
+            "echeance_jours": ech_j,
+            "mois_min": mois_min,
+            "periode": periode,
+            "title": title,
+            "desc": pr["intitule"] + "\n" + pr["horaires"] + "\n" + detail + tnote,
+            "montant": montant,
+            "nb": nb,
+            "tva_franchise": franchise,
+            "b2b": b2b,
+        }
 
     invoices = []
     num = fa.get("num_depart", 1)
+
+    if decoupage == "global":
+        ws, we = debut, fin
+        worked = jours_ouvres(ws, we, feries)
+        montant = round(forfait * nb, 2)
+        fnote = ", ".join(f"{d.day:02d}/{d.month:02d}"
+                          for d in feries_in(ws, we, feries))
+        detail = (f"Période : du {ws.strftime('%d/%m/%Y')} au "
+                  f"{we.strftime('%d/%m/%Y')} - {worked} jours ouvrés (lun-ven)")
+        detail += f", hors {fnote}." if fnote else "."
+        periode = (f"   Période : du {ws.strftime('%d/%m/%Y')} au "
+                   f"{we.strftime('%d/%m/%Y')}     "
+                   f"Forfait mensuel {fmt(forfait)} EUR HT/{unite} x {nb}")
+        invoices.append(make(num, we, montant, libelle, detail, periode,
+                             "mission"))
+        return invoices
+
     for (y, m) in months_between(debut, fin):
         first = date(y, m, 1)
         last = date(y, m, calendar.monthrange(y, m)[1])
@@ -122,42 +171,27 @@ def compute_invoices(emetteur, client):
             continue
         full = jours_ouvres(first, last, feries)
         is_full = debut <= first and fin >= last
-        montant = forfait if is_full else round(forfait * worked / full, 2)
+        montant = (round(forfait * nb, 2) if is_full
+                   else round(forfait * nb * worked / full, 2))
         fnote = ", ".join(f"{d.day:02d}/{d.month:02d}"
                           for d in feries_in(ws, we, feries))
         mois_min = MOIS[m].lower()
-
         if is_full:
             detail = f"Forfait mensuel complet : {worked} jours ouvrés"
             detail += f" (hors {fnote})." if fnote else "."
-            periode_extra = ""
+            extra = ""
         else:
             detail = (f"{worked} jours ouvrés travaillés ({ws.day} au "
                       f"{we.day:02d}/{m:02d}")
             detail += f", hors {fnote}" if fnote else ""
             detail += (f") sur {full} jours ouvrés de {mois_min} : "
                        f"prorata {worked}/{full} du forfait.")
-            periode_extra = f" - prorata {worked}/{full} jours ouvrés"
-
-        d_fac = we
-        d_ech = we + timedelta(days=fa.get("echeance_jours", 30))
-        desc = (client["prestataire"]["intitule"] + "\n"
-                + client["prestataire"]["horaires"] + "\n" + detail)
-        invoices.append({
-            "num": f"{fa['annee']}-{num:03d}",
-            "date": d_fac.strftime("%d/%m/%Y"),
-            "echeance": d_ech.strftime("%d/%m/%Y"),
-            "echeance_jours": fa.get("echeance_jours", 30),
-            "mois_min": mois_min,
-            "periode": (f"   Période : du {ws.strftime('%d/%m/%Y')} au "
-                        f"{we.strftime('%d/%m/%Y')}       "
-                        f"Forfait mensuel {fmt(forfait)} EUR HT{periode_extra}"),
-            "title": f"Prestation d'assistanat commercial - {MOIS[m]} {y}",
-            "desc": desc,
-            "montant": montant,
-            "tva_franchise": fa.get("tva", "franchise") == "franchise",
-            "b2b": b2b,
-        })
+            extra = f" - prorata {worked}/{full} jours ouvrés"
+        periode = (f"   Période : du {ws.strftime('%d/%m/%Y')} au "
+                   f"{we.strftime('%d/%m/%Y')}       "
+                   f"Forfait mensuel {fmt(forfait)} EUR HT{extra}")
+        invoices.append(make(num, we, montant, f"{libelle} - {MOIS[m]} {y}",
+                             detail, periode, mois_min))
         num += 1
     return invoices
 
@@ -204,7 +238,6 @@ def render(path, emetteur, client, inv):
         pdf.set_line_width(width)
         pdf.line(L, y, R, y)
 
-    # en-tete
     pdf.set_text_color(*NAVY)
     pdf.set_font("Helvetica", "B", 24)
     s(L, 15)
@@ -287,13 +320,14 @@ def render(path, emetteur, client, inv):
     cell(C_TOT, 7, "Total HT  ", align="R", fill=True)
     pdf.set_y(yh + 7)
 
+    nbq = inv.get("nb", 1)
     y0 = pdf.get_y() + 1.5
     pdf.set_text_color(*DARK)
     pdf.set_font("Helvetica", "", 9)
     s(xq, y0)
-    cell(C_QTE, 5, "1", align="C")
+    cell(C_QTE, 5, str(nbq), align="C")
     s(xp, y0)
-    cell(C_PU, 5, fmt(inv["montant"]) + " ", align="R")
+    cell(C_PU, 5, fmt(inv["montant"] / nbq) + " ", align="R")
     s(xt, y0)
     cell(C_TOT, 5, fmt(inv["montant"]) + " ", align="R")
     pdf.set_font("Helvetica", "B", 9.5)
@@ -356,7 +390,6 @@ def render(path, emetteur, client, inv):
           f"{regl}")
     block("Mentions légales", mentions(emetteur, inv))
 
-    # pied de page
     pdf.set_y(-12)
     pdf.set_font("Helvetica", "", 7.5)
     pdf.set_text_color(*GREY)
@@ -386,7 +419,7 @@ def main():
             args.outdir,
             f"Facture_{inv['num']}_{client['ref']}_{inv['mois_min']}.pdf")
         render(out, emetteur, client, inv)
-        print(f"  {inv['num']}  {inv['title']:<48} {fmt(inv['montant']):>10} EUR"
+        print(f"  {inv['num']}  {inv['title']:<46} {fmt(inv['montant']):>10} EUR"
               f"  -> {os.path.basename(out)}")
 
 

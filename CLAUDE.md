@@ -40,6 +40,9 @@ jours ouvrés, prorata des mois partiels, TVA franchise (art. 293 B), mentions
   ```
 - **Nouveau client** = créer `clients/<client>.json` (copier le modèle, remplir la
   fiche d'intake du §2) puis lancer la commande. Rien à coder.
+- Deux modèles : `clients/il-distribution.json` (facturation **mensuelle**, 1 ressource)
+  et `clients/pattom.json` (mission **globale** = 1 facture ; **plusieurs ressources**
+  via `nb_ressources` ; **tarif négocié** affiché via `tarif_standard_eur`).
 - Penser à compléter le tableau des **jours fériés** (`FERIES_ISO`) pour chaque
   nouvelle année.
 - ⚠️ Police Helvetica/latin-1 : accents FR OK, `€` NON supporté → `EUR` (le moteur

@@ -15,6 +15,13 @@
   - Ex. juin 2026 : 7 jours travaillés / 21 jours ouvrés → 600 € × 7/21 = **200 €**.
 - Mois complet = forfait plein (ex. juillet 2026 : 22 jours ouvrés → 600 €).
 
+## Tarifs (catalogue / négociés)
+- **Téléprospecteur** : 1 500 € HT/mois (catalogue). Négocié **PATTOM : 1 000 € HT/mois**
+  (affiché sur la facture comme « tarif négocié, au lieu de 1 500 € »).
+- **Assistant commercial** : selon contrat (IL DISTRIBUTION : 600 € HT/mois).
+- Mission « rolling month » (ex. 29/06→29/07) = **une facture globale** au forfait plein
+  (`decoupage: "global"`), et non un découpage calendaire au prorata.
+
 ## TVA
 - **Décision 2026 : franchise en base** (art. 293 B du CGI) — pas de TVA,
   HT = TTC. Réévaluation l'an prochain.
