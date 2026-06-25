@@ -109,18 +109,19 @@ def compute_invoices(emetteur, client):
     mi = client["mission"]
     fa = client["facturation"]
     pr = client["prestataire"]
-    debut, fin = parse_d(mi["debut"]), parse_d(mi["fin"])
     forfait = float(mi["forfait_mensuel_eur"])          # par ressource / mois
     nb = int(pr.get("nb_ressources", 1))
     libelle = pr.get("libelle", "Prestation d'assistanat commercial")
     unite = pr.get("unite", "personne")
     standard = mi.get("tarif_standard_eur")
     decoupage = mi.get("decoupage", "mensuel")
-    years = list(range(debut.year, fin.year + 1))
-    feries = feries_set(pr.get("jours_feries_pays", []), years)
+    pays = pr.get("jours_feries_pays", [])
     b2b = client.get("type", "B2B").upper() == "B2B"
     franchise = fa.get("tva", "franchise") == "franchise"
     ech_j = fa.get("echeance_jours", 30)
+
+    def feries_for(*dts):
+        return feries_set(pays, sorted({d.year for d in dts}))
 
     tnote = ""
     if standard:
@@ -145,6 +146,29 @@ def compute_invoices(emetteur, client):
 
     invoices = []
     num = fa.get("num_depart", 1)
+
+    if decoupage == "periodes":
+        for p in mi["periodes"]:
+            ws, we = parse_d(p["debut"]), parse_d(p["fin"])
+            feries = feries_for(ws, we)
+            montant = round(float(p.get("montant_eur", forfait)) * nb, 2)
+            worked = jours_ouvres(ws, we, feries)
+            fnote = ", ".join(f"{d.day:02d}/{d.month:02d}"
+                              for d in feries_in(ws, we, feries))
+            detail = (f"Forfait mensuel - période du {ws.strftime('%d/%m/%Y')} "
+                      f"au {we.strftime('%d/%m/%Y')} ({worked} jours ouvrés")
+            detail += f", hors {fnote})." if fnote else ")."
+            periode = (f"   Période : du {ws.strftime('%d/%m/%Y')} au "
+                       f"{we.strftime('%d/%m/%Y')}       "
+                       f"Forfait mensuel {fmt(forfait)} EUR HT")
+            invoices.append(make(num, we, montant,
+                                 f"{libelle} - {MOIS[ws.month]} {ws.year}",
+                                 detail, periode, MOIS[ws.month].lower()))
+            num += 1
+        return invoices
+
+    debut, fin = parse_d(mi["debut"]), parse_d(mi["fin"])
+    feries = feries_for(debut, fin)
 
     if decoupage == "global":
         ws, we = debut, fin

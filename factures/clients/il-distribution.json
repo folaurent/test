@@ -14,10 +14,12 @@
     "jours_feries_pays": ["MG", "FR"]
   },
   "mission": {
-    "debut": "2026-06-19",
-    "fin": "2026-07-31",
     "forfait_mensuel_eur": 600,
-    "decoupage": "mensuel"
+    "decoupage": "periodes",
+    "periodes": [
+      {"debut": "2026-06-01", "fin": "2026-06-29"},
+      {"debut": "2026-07-01", "fin": "2026-07-29"}
+    ]
   },
   "facturation": {
     "annee": 2026,

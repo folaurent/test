@@ -10,10 +10,11 @@
 
 ## Tarification
 - Forfait **mensuel** convenu par client (ex. IL DISTRIBUTION : 600 €/mois).
-- **Mois partiel = prorata en jours ouvrés** :
-  `montant = forfait × (jours ouvrés travaillés / jours ouvrés du mois)`, hors fériés.
-  - Ex. juin 2026 : 7 jours travaillés / 21 jours ouvrés → 600 € × 7/21 = **200 €**.
-- Mois complet = forfait plein (ex. juillet 2026 : 22 jours ouvrés → 600 €).
+- Découpage **`mensuel`** : 1 facture/mois calendaire. Mois complet = forfait plein ;
+  **mois partiel = prorata jours ouvrés** `forfait × (j. ouvrés travaillés / j. ouvrés du mois)`.
+- Découpage **`periodes`** : périodes explicites, **chacune au forfait plein** (ex. IL
+  DISTRIBUTION : 01→29/06 et 01→29/07 = 600 € chacune).
+- Découpage **`global`** : 1 facture pour toute la mission au forfait plein (ex. PATTOM).
 
 ## Tarifs (catalogue / négociés)
 - **Téléprospecteur** : 1 500 € HT/mois (catalogue). Négocié **PATTOM : 1 000 € HT/mois**
