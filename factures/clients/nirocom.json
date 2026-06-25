@@ -1,0 +1,40 @@
+{
+  "ref": "NIROCOM",
+  "raison_sociale": "CANESI NICOLAS (NIROCOM)",
+  "forme": "Entreprise individuelle",
+  "capital": "",
+  "adresse": ["315 avenue Jean Moulin", "6419 avenue Marcel Matteoda", "13480 Cabriès"],
+  "siren": "937 736 445",
+  "contact": "M. Nicolas Canesi",
+  "contact_role": "Entrepreneur individuel",
+  "type": "B2B",
+  "_note": "Client appelé « SCALYX » en interne. Entité légale : EI CANESI NICOLAS, nom commercial NIROCOM (SIREN 937 736 445, Cabriès). Téléprospecteur mi-temps = demi-mensualité (750 EUR = 1/2 x 1 500 EUR/mois).",
+  "prestataire": {
+    "libelle": "Prestation de téléprospection",
+    "intitule": "Mise à disposition d'1 téléprospecteur/trice en offshore, à mi-temps.",
+    "horaires": "Horaires : 7 h/jour, du lundi au vendredi.",
+    "jours_feries_pays": [],
+    "nb_ressources": 1,
+    "unite": "téléprospecteur"
+  },
+  "mission": {
+    "forfait_mensuel_eur": 1500,
+    "decoupage": "periodes",
+    "periodes": [
+      {
+        "debut": "2026-07-29",
+        "fin": "2026-08-12",
+        "montant_eur": 750,
+        "prefix": "Demi-mensualité (mi-temps)",
+        "label": "Demi-mensualité (mi-temps) : 750,00 EUR HT",
+        "note": "Mi-temps = demi-mensualité ; 750 EUR HT (plein tarif 1 500 EUR HT/mois)."
+      }
+    ]
+  },
+  "facturation": {
+    "annee": 2026,
+    "num_depart": 4,
+    "echeance_jours": 30,
+    "tva": "franchise"
+  }
+}

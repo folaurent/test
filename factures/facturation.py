@@ -155,15 +155,18 @@ def compute_invoices(emetteur, client):
             worked = jours_ouvres(ws, we, feries)
             fnote = ", ".join(f"{d.day:02d}/{d.month:02d}"
                               for d in feries_in(ws, we, feries))
-            detail = (f"Forfait mensuel - période du {ws.strftime('%d/%m/%Y')} "
+            prefix = p.get("prefix", "Forfait mensuel")
+            detail = (f"{prefix} - période du {ws.strftime('%d/%m/%Y')} "
                       f"au {we.strftime('%d/%m/%Y')} ({worked} jours ouvrés")
             detail += f", hors {fnote})." if fnote else ")."
+            if p.get("note"):
+                detail += " " + p["note"]
+            label = p.get("label", f"Forfait mensuel {fmt(forfait)} EUR HT")
             periode = (f"   Période : du {ws.strftime('%d/%m/%Y')} au "
-                       f"{we.strftime('%d/%m/%Y')}       "
-                       f"Forfait mensuel {fmt(forfait)} EUR HT")
-            invoices.append(make(num, we, montant,
-                                 f"{libelle} - {MOIS[ws.month]} {ws.year}",
-                                 detail, periode, MOIS[ws.month].lower()))
+                       f"{we.strftime('%d/%m/%Y')}       {label}")
+            title = p.get("title", f"{libelle} - {MOIS[ws.month]} {ws.year}")
+            invoices.append(make(num, we, montant, title, detail, periode,
+                                 MOIS[ws.month].lower()))
             num += 1
         return invoices
 
@@ -309,12 +312,14 @@ def render(path, emetteur, client, inv):
     em_lines += [(f"Tél. : {emetteur['tel']}", False),
                  (f"SIREN : {emetteur['siren_mention']}", False),
                  (f"Représentée par {emetteur['representant']}", False)]
-    cl_lines = [(f"{client['raison_sociale']} - {client['forme']}", True),
-                (f"Capital social : {client['capital']}", False)]
+    cl_lines = [(f"{client['raison_sociale']} - {client['forme']}", True)]
+    if client.get("capital"):
+        cl_lines.append((f"Capital social : {client['capital']}", False))
     cl_lines += [(a, False) for a in client["adresse"]]
-    cl_lines += [(f"SIREN : {client['siren']}", False),
-                 (f"À l'attention de {client['contact']},", False),
-                 (client["contact_role"], False)]
+    cl_lines.append((f"SIREN : {client['siren']}", False))
+    cl_lines.append((f"À l'attention de {client['contact']},", False))
+    if client.get("contact_role"):
+        cl_lines.append((client["contact_role"], False))
     y1 = party(L, 87, "ÉMETTEUR", em_lines)
     y2 = party(108, 87, "FACTURÉ À", cl_lines)
     ybloc = max(y1, y2) + 4

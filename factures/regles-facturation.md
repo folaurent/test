@@ -19,6 +19,8 @@
 ## Tarifs (catalogue / négociés)
 - **Téléprospecteur** : 1 500 € HT/mois (catalogue). Négocié **PATTOM : 1 000 € HT/mois**
   (affiché sur la facture comme « tarif négocié, au lieu de 1 500 € »).
+- **Mi-temps / demi-mensualité** = ½ du forfait mensuel (ex. SCALYX = EI CANESI Nicolas /
+  NIROCOM : **750 € HT** = ½ × 1 500 €).
 - **Assistant commercial** : selon contrat (IL DISTRIBUTION : 600 € HT/mois).
 - Mission « rolling month » (ex. 29/06→29/07) = **une facture globale** au forfait plein
   (`decoupage: "global"`), et non un découpage calendaire au prorata.
