@@ -22,8 +22,8 @@
     "decoupage": "periodes",
     "periodes": [
       {
-        "debut": "2026-07-29",
-        "fin": "2026-08-12",
+        "debut": "2026-06-29",
+        "fin": "2026-07-13",
         "montant_eur": 750,
         "prefix": "Demi-mensualité (mi-temps)",
         "label": "Demi-mensualité (mi-temps) : 750,00 EUR HT",
