@@ -215,6 +215,38 @@ Conservé pour les automatisations qu'un client veut lancer manuellement :
 - **Lot 4 — Historique** : liste/détail des runs, statut temps réel.
 - **Lot 5 — Onboarding** : invitations clients, branding par org.
 
+## 8b. Automatisation interactive — Outreach Engine (OpenOutreach)
+
+Certaines automatisations ne sont pas de simples toggles : elles sont
+**interactives** et ont leurs propres écrans. La première est l'**Outreach
+Engine**, branchée sur [OpenOutreach](https://github.com/eracle/OpenOutreach)
+(prospection B2B LinkedIn + email, pipeline IA/ML, mini-CRM).
+
+Voir la maquette : `prototype/` → carte « Outreach Engine » (route `#/outreach`).
+
+**Ce que le client fait depuis le portail**
+- Onglet **Targeting & criteria** : il saisit ses critères (ce qu'il vend, ICP —
+  intitulés, secteurs, taille, zones, mots-clés —, canaux, ton, modèles de
+  message, nombre de relances, limites quotidiennes, rigueur de qualification),
+  puis clique **Launch campaign**.
+- Onglet **Pipeline** : funnel Discovered → Qualified → Contacted → Replied →
+  Meetings, stats et activité du jour (dans les limites de sécurité).
+- Onglet **Leads** : mini-CRM (poste, société, canal, stage, fit score).
+- Onglet **Inbox** : fil de conversation géré par l'IA, reprise manuelle possible.
+
+**Côté intégration (pour le dev)**
+- `Launch campaign` → `POST /api/automations/outreach-engine/run` (route serveur
+  signée) avec le payload de critères → webhook n8n qui pilote l'instance
+  OpenOutreach du client (1 instance / déploiement isolé par org recommandé).
+- OpenOutreach renvoie l'avancement via `/api/ingest` (signé, `ingest_token`) :
+  nouveaux leads, changements de stage, réponses entrantes → le portail met à
+  jour le funnel, la table des leads et l'inbox (Supabase Realtime).
+- Tables additionnelles : `outreach_campaigns` (critères + statut),
+  `outreach_leads` (lead, stage, score, canal), `outreach_messages` (fil).
+- Secrets (LinkedIn, clé LLM, email-finder, mailbox) restent côté serveur /
+  instance OpenOutreach — jamais exposés au client. Le portail n'affiche que des
+  **statuts de connexion** (panneau « Connections »).
+
 ## 9. Décisions de cadrage (tranchées)
 
 1. **Volumétrie** : 5 à 20 clients → multi-tenant et logs soignés dès le départ,
