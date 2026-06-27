@@ -16,14 +16,19 @@
   DISTRIBUTION : 01→29/06 et 01→29/07 = 600 € chacune).
 - Découpage **`global`** : 1 facture pour toute la mission au forfait plein (ex. PATTOM).
 
-## Tarifs (catalogue / négociés)
-- **Téléprospecteur** : 1 500 € HT/mois (catalogue). Négocié **PATTOM : 1 000 € HT/mois**
-  (affiché sur la facture comme « tarif négocié, au lieu de 1 500 € »).
-- **Mi-temps / demi-mensualité** = ½ du forfait mensuel (ex. SCALYX = EI CANESI Nicolas /
-  NIROCOM : **750 € HT** = ½ × 1 500 €).
-- **Assistant commercial** : selon contrat (IL DISTRIBUTION : 600 € HT/mois).
-- Mission « rolling month » (ex. 29/06→29/07) = **une facture globale** au forfait plein
-  (`decoupage: "global"`), et non un découpage calendaire au prorata.
+## Tarifs & marges des prestations  *(INTERNE — ne jamais communiquer au client)*
+
+| Prestation (par mois, full-time) | Coût Jonction | Vente HT | Marge brute |
+|---|---|---|---|
+| **Téléprospecteur** (lun–ven, 7 h/j) | 400 € (prestataire) + 35 € (n° VOIP) = **435 €** | **1 500 €** (catalogue) | **1 065 € — 71 %** |
+| → négocié PATTOM | 435 € | 1 000 € | 565 € — 57 % |
+| **Assistant commercial** (ex. Jimmy / IL DISTRIBUTION) | **400 €** | 600 € | 200 € — 33 % |
+
+- **VOIP « siège allo »** : 35 €/mois par numéro (compté 1 par téléprospecteur).
+- **Mi-temps / demi-mensualité** = ½ du prix de vente (ex. SCALYX/NIROCOM : 750 € = ½ × 1 500 €).
+- Sur la facture, **seul le prix de vente HT** figure — jamais le coût ni la marge.
+- Mission « mois glissant » (ex. 29/06→29/07) = **1 facture globale** au forfait plein
+  (`decoupage: "global"`), pas de prorata calendaire.
 
 ## TVA
 - **Décision 2026 : franchise en base** (art. 293 B du CGI) — pas de TVA,
