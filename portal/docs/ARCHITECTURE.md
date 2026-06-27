@@ -15,11 +15,11 @@ Décisions de cadrage validées :
 | ------------------ | ------------------------------------------------------------------- |
 | Modèle d'accès     | Agence (admin) + clients cloisonnés (multi-tenant)                  |
 | Stack              | Next.js (App Router) + Supabase (Auth, Postgres, RLS)               |
-| Déclenchement      | Webhooks n8n (1 workflow par automatisation), extensible au code    |
+| Déclenchement      | **Événementiel** (événement externe → n8n), bouton à la demande en option |
+| Volumétrie cible   | Moyen — 5 à 20 clients (multi-tenant et logs soignés dès le départ) |
+| Historique client  | Statut simple (queued/running/success/error), sans logs détaillés ni fichiers |
+| Infra              | n8n **cloud** (n8n.io) ; auth client par **magic link** (sans mot de passe) |
 | Première étape     | Specs + architecture, puis MVP                                      |
-
-À confirmer / paramètres ouverts (voir §9) : volumétrie, types de déclencheurs
-(à la demande / planifié / événementiel), besoin d'historique côté client.
 
 ## 2. Personae & rôles
 
@@ -50,13 +50,15 @@ organisation spéciale avec le flag `is_agency = true`.
                                └─────────┬────────────┘
                                          │ insert run (queued)
                                          ▼
-                               ┌──────────────────────┐
-   signature HMAC + secret     │  Déclencheur backend  │
-   ┌──────────────────────────►│  n8n webhook / code   │
-   │   POST /webhook/<auto>     └─────────┬────────────┘
-   │                                      │ callback (statut/résultat)
-   └──────────────────────────────────────┘
-            POST /api/runs/<id>/callback (signé)
+  Événement externe                ┌──────────────────────┐
+  (lead, email, paiement…) ───────►│  n8n (cloud)          │
+                                    │  workflow / trigger   │
+   (option) POST /webhook/<auto>    └─────────┬────────────┘
+   signé HMAC, depuis le portail              │ POST /api/ingest
+                                              │ (signé, ingest_token)
+                                              ▼
+                                    enregistre/MAJ automation_runs
+                                    → statut visible côté client (Realtime)
 ```
 
 Points clés :
@@ -110,6 +112,7 @@ org_automations (
   automation_id uuid references automations,
   enabled boolean default true,
   config jsonb,                  -- valeurs spécifiques au client (clés API, etc.)
+  ingest_token text unique,      -- secret de rattachement événement n8n -> org
   unique (org_id, automation_id)
 )
 
@@ -139,26 +142,54 @@ automation_runs (
 - Les écritures sensibles (création de run, callback n8n) passent par des
   route handlers serveur utilisant la `service_role`, pas le client.
 
-## 5. Flux de déclenchement (on-demand)
+## 5. Flux de déclenchement
+
+### 5.1 Événementiel (flux principal)
+
+L'exécution part d'un **événement externe** (nouveau lead, email reçu, paiement…)
+qui arrive d'abord dans n8n. Le portail n'initie pas le run : il l'**enregistre**
+et en montre le **statut** au bon client.
+
+Enjeu clé : n8n doit savoir **à quel client (org)** rattacher l'événement. Pour
+ça, chaque attribution `org_automations` possède un **token d'ingestion unique**
+(`ingest_token`). n8n inclut ce token (ou l'utilise dans l'URL de callback) pour
+identifier l'org.
+
+1. Un événement externe atteint le workflow n8n (trigger n8n natif ou webhook entrant).
+2. n8n traite, puis notifie le portail :
+   `POST /api/ingest` avec un payload **signé (HMAC)** contenant
+   `ingest_token`, `status`, et un `output` minimal.
+3. Le portail résout `ingest_token → (org_id, automation_id)`, vérifie
+   `org_automations.enabled`, puis crée/MAJ une ligne `automation_runs`
+   (`status` = `running` puis `success`/`error`, `finished_at`).
+4. Côté client, l'UI affiche le statut en quasi temps réel
+   (Supabase Realtime sur `automation_runs`, filtré par org via RLS).
+
+Le client, lui, **active/désactive** et **configure** ses automatisations depuis
+l'app ; il n'a pas besoin de cliquer pour déclencher.
+
+### 5.2 À la demande (option, bouton)
+
+Conservé pour les automatisations qu'un client veut lancer manuellement :
 
 1. Le client ouvre une automatisation → formulaire généré depuis `input_schema`.
-2. Soumission → `POST /api/automations/<slug>/run` (route serveur).
-3. La route vérifie : user authentifié, org possède `org_automations.enabled`.
-4. Insertion `automation_runs (status='queued', input=...)`.
-5. La route POST le webhook n8n avec un payload signé (HMAC) incluant
-   `run_id`, `org_id`, `input`, et l'`org_automations.config`.
-6. n8n exécute, puis appelle `POST /api/runs/<run_id>/callback` (signé) →
-   `status='success'|'error'`, `output`, `finished_at`.
-7. L'UI suit le statut (polling court ou Supabase Realtime sur `automation_runs`).
+2. `POST /api/automations/<slug>/run` (route serveur) vérifie auth + `enabled`.
+3. Insertion `automation_runs (status='queued')`, puis POST signé au webhook n8n.
+4. n8n exécute et notifie via le même endpoint `/api/ingest` (statut final).
+
+> Statut simple retenu : on stocke `status`/`finished_at` et un `output` léger.
+> Pas de logs détaillés ni de fichiers générés exposés au client pour le MVP.
 
 ## 6. Écrans (MVP)
 
 **Espace client**
-- `/login` — auth Supabase (email magic link ou password)
-- `/` — dashboard : cartes des automatisations attribuées + statut
-- `/automations/[slug]` — détail + formulaire de lancement
-- `/runs` — historique des exécutions de l'org
-- `/runs/[id]` — détail d'un run (input, output, logs, statut)
+- `/login` — auth Supabase par **magic link** (sans mot de passe)
+- `/` — dashboard : cartes des automatisations attribuées, **toggle actif/inactif**,
+  dernier déclenchement et statut
+- `/automations/[slug]` — détail + configuration (champs `config`) + bouton
+  « lancer maintenant » si l'automatisation l'autorise
+- `/runs` — flux des exécutions de l'org (statut simple)
+- `/runs/[id]` — détail d'un run (statut, horodatage, output léger)
 
 **Espace agence (admin)**
 - `/admin/orgs` — liste des clients, création, invitations
@@ -184,12 +215,19 @@ automation_runs (
 - **Lot 4 — Historique** : liste/détail des runs, statut temps réel.
 - **Lot 5 — Onboarding** : invitations clients, branding par org.
 
-## 9. Questions ouvertes (à trancher avant Lot 3)
+## 9. Décisions de cadrage (tranchées)
 
-1. **Volumétrie** court terme (nb clients × nb automatisations) → niveau de robustesse.
-2. **Types de déclencheurs** dominants : bouton à la demande / planifié / événementiel ?
-   Un exemple concret d'automatisation à offrir.
-3. **Historique côté client** : besoin de logs/fichiers/statut visibles, ou juste
-   « cliquer et c'est traité ailleurs » ?
-4. **n8n** : instance cloud n8n.io ou self-hosted ? (impacte l'auth des webhooks)
-5. **Auth client** : magic link (sans mot de passe) ou email + mot de passe ?
+1. **Volumétrie** : 5 à 20 clients → multi-tenant et logs soignés dès le départ,
+   sans sur-ingénierie (pas de file d'attente dédiée pour l'instant).
+2. **Déclencheurs** : **événementiel** en flux principal (§5.1), bouton à la
+   demande gardé en option (§5.2).
+3. **Historique côté client** : **statut simple** (queued/running/success/error
+   + horodatage + output léger). Pas de logs détaillés ni de fichiers au MVP.
+4. **n8n** : instance **cloud** (n8n.io).
+5. **Auth client** : **magic link** Supabase (sans mot de passe).
+
+### Reste à préciser (n'empêche pas de démarrer)
+
+- Un **exemple concret** d'automatisation réelle à offrir (pour modéliser le
+  premier workflow n8n de bout en bout).
+- Le besoin éventuel d'**invitations multi-membres** côté client (rôles).
