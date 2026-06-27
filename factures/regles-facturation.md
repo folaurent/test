@@ -22,9 +22,9 @@
 |---|---|---|---|
 | **Téléprospecteur** (lun–ven, 7 h/j) | 400 € (prestataire) + 35 € (n° VOIP) = **435 €** | **1 500 €** (catalogue) | **1 065 € — 71 %** |
 | → négocié PATTOM | 435 € | 1 000 € | 565 € — 57 % |
-| **Assistant commercial** (ex. Jimmy / IL DISTRIBUTION) | **400 €** | 600 € | 200 € — 33 % |
+| **Assistant commercial** (ex. Jimmy / IL DISTRIBUTION) | 400 € + 35 € (VOIP) = **435 €** | 600 € | 165 € — 27,5 % |
 
-- **VOIP « siège allo »** : 35 €/mois par numéro (compté 1 par téléprospecteur).
+- **VOIP « siège allo »** : 35 €/mois par numéro, **1 par ressource placée** (téléprospecteur *ou* assistant commercial).
 - **Mi-temps / demi-mensualité** = ½ du prix de vente (ex. SCALYX/NIROCOM : 750 € = ½ × 1 500 €).
 - Sur la facture, **seul le prix de vente HT** figure — jamais le coût ni la marge.
 - Mission « mois glissant » (ex. 29/06→29/07) = **1 facture globale** au forfait plein
