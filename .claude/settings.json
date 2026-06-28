@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Indeed__search_jobs",
+      "mcp__Indeed__get_job_details",
+      "mcp__Indeed__get_company_data"
+    ]
+  }
+}
