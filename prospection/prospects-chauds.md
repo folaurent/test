@@ -35,6 +35,38 @@
   à commission → faible fit, faible confiance.
 - **Wisecom** = annonce de 2023 (périmée).
 
+## Élargissement — hors Essonne
+
+### Lyon / Rhône (69) — zone riche en distributeurs PME
+| Entreprise | Lieu | Recrute | Secteur (à confirmer) | Annonce |
+|---|---|---|---|---|
+| **Mondial Beauté** | Villefranche-s-Saône | Assistant commercial sédentaire | Distrib. beauté/cosmétique B2B | https://to.indeed.com/aaqhmmf8ldnc |
+| **MP Labo** | Lyon | Commercial sédentaire | Distrib. dentaire/médical | https://to.indeed.com/aasc7zpzkdgs |
+| **BMPB Rhône-Alpes** | Limas | Téléprospecteur | Bois/matériaux ? (à confirmer) | https://to.indeed.com/aa9fz6qqjg2m |
+| HelloCSE | Lyon 7e | Commercial sédentaire B2B | Plateforme CSE (SaaS) | https://to.indeed.com/aabnmdhqybbh |
+| Indy | Lyon | Business developer | Fintech/compta (SaaS) | https://to.indeed.com/aawv4dw2ffzr |
+
+### Aix-Marseille (13) — près de ton client NIROCOM
+| Entreprise | Lieu | Recrute | Secteur | Annonce |
+|---|---|---|---|---|
+| **Technirel** | La Ciotat | Commercial sédentaire export | PME industrielle | https://to.indeed.com/aawjcbjs8cwp |
+| Atout Fermetures | Vitrolles | Commercial sédentaire | Fermetures pour l'habitat *(annonce 2025)* | https://to.indeed.com/aab4kc44wpq2 |
+
+### Hauts-de-Seine / Yvelines (92/78) — surtout des grands comptes, peu de PME
+| Entreprise | Lieu | Recrute | Secteur | Annonce |
+|---|---|---|---|---|
+| Dhollandia | Nanterre (92) | Commercial sédentaire | Hayons élévateurs (industriel) | https://to.indeed.com/aas2ml72tw4x |
+| Groupe PPK / Sprint Racing | Le Pecq (78) | Assistant commercial | Équipement racing/karting | https://to.indeed.com/aaw6dstytpwd |
+| TP-Link | Vélizy (78) | Assistant commercial | Distrib. réseau/tech (gros) | https://to.indeed.com/aacrcj4nqkgc |
+
+## Bruit filtré (pour info)
+~60 % des annonces « commercial » sont à écarter : **écoles/alternance** (ISCOD, ICADEMIE,
+École de l'Excellence Commerciale, Walter Learning, Financia), **cabinets de recrutement**
+(Talents Commerciaux, Winning Search, Uptoo, Roumane), **centres d'appels** (Marquetis Call,
+Waoup), **grands comptes** (Rexel, BNP, Conforama, UGAP, Savencia, France Boissons, Fiducial).
+→ Les meilleures cibles ICP sont les **PME distributrices** (Essonne, Lyon, Aix-Marseille),
+pas les hubs corporate (La Défense).
+
 ## Prochaine étape
 Enrichir le Tier 1 via Pappers (SIREN, dirigeant à contacter, effectif, CA) → liste prête
 à appeler avec `script-cold-call.md`.
