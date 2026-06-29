@@ -2,6 +2,13 @@
 
 > Mémo des conventions à appliquer pour toutes les factures de prestation.
 
+## Bascule Scalead → Jonction (IMPORTANT)
+- **Jusqu'au 18/06/2026** : le CA passait par **Scalead** (société de l'associé), qui
+  encaissait tout le CA et payait toutes les factures prestataires.
+- **À compter du 19/06/2026** : **Jonction prend le relais** — facture les clients et paie
+  les prestataires (ex. Jimmy) dès cette date.
+- ⇒ **Les factures Jonction démarrent au 19/06/2026** ; avant = Scalead (hors périmètre Jonction).
+
 ## Prestataires
 - Décomptés en **jours ouvrés** (lundi → vendredi).
 - **Jours fériés non facturés**, selon le **pays du prestataire** :
@@ -21,7 +28,7 @@
 | Prestation (par mois, full-time) | Coût Jonction | Vente HT | Marge brute |
 |---|---|---|---|
 | **Téléprospecteur** (lun–ven, 7 h/j) | 400 € (prestataire) + 35 € (n° VOIP) = **435 €** | **1 500 €** (catalogue) | **1 065 € — 71 %** |
-| → négocié PATTOM | 435 € | 1 000 € | 565 € — 57 % |
+| → PATTOM (Jimmy & Safidy, ×2) | 435 €/pers | **700 €/pers** (= 1 400 €/mois) | 265 €/pers — 37,9 % |
 | **Assistant commercial** (ex. Jimmy / IL DISTRIBUTION) | 400 € + 35 € (VOIP) = **435 €** | 600 € | 165 € — 27,5 % |
 
 - **VOIP « siège allo »** : 35 €/mois par numéro, **1 par ressource placée** (téléprospecteur *ou* assistant commercial).

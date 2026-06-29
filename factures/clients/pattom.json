@@ -8,20 +8,19 @@
   "contact": "M. Patrick Da Cunha",
   "contact_role": "Gérant",
   "type": "B2B",
-  "_note_tarif": "Téléprospecteur : 1 000 EUR HT/mois négocié (catalogue 1 500 EUR HT). Mémorisé pour les prochains devis PATTOM.",
+  "_note_tarif": "PATTOM : 2 téléprospecteurs (Jimmy & Safidy) à 700 EUR HT/mois chacun = 1 400 EUR HT/mois. Facturé sur le mois complet de juin 2026.",
   "prestataire": {
     "libelle": "Prestation de téléprospection",
-    "intitule": "Mise à disposition de 2 téléprospecteurs/trices basés à Madagascar.",
+    "intitule": "Mise à disposition de 2 téléprospecteurs (Jimmy et Safidy) basés à Madagascar.",
     "horaires": "Horaires : 7 h/jour, du lundi au vendredi.",
     "jours_feries_pays": ["MG"],
     "nb_ressources": 2,
     "unite": "téléprospecteur"
   },
   "mission": {
-    "debut": "2026-06-29",
-    "fin": "2026-07-29",
-    "forfait_mensuel_eur": 1000,
-    "tarif_standard_eur": 1500,
+    "debut": "2026-06-01",
+    "fin": "2026-06-30",
+    "forfait_mensuel_eur": 700,
     "decoupage": "global"
   },
   "facturation": {
