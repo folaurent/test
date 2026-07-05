@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Froid Bornet — 360° X-Ray</title>
+<style>
+  :root{
+    --bg:#0a0e14; --bg2:#080b11;  --panel:#111823; --panel2:#0d141d;
+    --line:#1e2a3a; --txt:#e7eef7; --muted:#8ea3bd; --dim:#5f7391;
+    --cold:#38bdf8; --cold2:#0ea5e9; --ok:#34d399; --warn:#fbbf24; --dang:#fb5b5b;
+    --accent:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#0f2233 0%,#0a0e14 55%);
+    color:var(--txt);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--cold)}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;background:rgba(10,14,20,.82);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;gap:6px;align-items:center;height:56px;overflow-x:auto;scrollbar-width:none}
+  nav .wrap::-webkit-scrollbar{display:none}
+  nav .brand{font-weight:800;letter-spacing:.4px;margin-right:14px;white-space:nowrap}
+  nav .brand span{color:var(--cold)}
+  nav a{color:var(--muted);text-decoration:none;font-size:13.5px;font-weight:600;padding:7px 11px;border-radius:8px;white-space:nowrap}
+  nav a:hover{color:var(--txt);background:#16202e}
+  /* hero */
+  header.hero{padding:64px 0 40px;border-bottom:1px solid var(--line)}
+  .kicker{color:var(--cold);font-weight:700;letter-spacing:2px;font-size:12.5px;text-transform:uppercase}
+  h1{font-size:clamp(34px,5vw,58px);line-height:1.02;margin:12px 0 8px;letter-spacing:-1px}
+  h1 b{color:var(--cold)}
+  .sub{color:var(--muted);font-size:18px;max-width:760px}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .tag{font-size:12.5px;color:var(--muted);border:1px solid var(--line);background:#0e1621;
+    padding:5px 11px;border-radius:999px}
+  .tag b{color:var(--txt)}
+  /* sections */
+  section{padding:52px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--cold);margin:0 0 4px}
+  h2+.h2sub{font-size:26px;font-weight:800;margin:0 0 26px;letter-spacing:-.5px}
+  /* kpi */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+  .kpi{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:18px}
+  .kpi .n{font-size:30px;font-weight:800;letter-spacing:-1px}
+  .kpi .l{color:var(--muted);font-size:13px;margin-top:2px}
+  .kpi .d{color:var(--dim);font-size:11.5px;margin-top:6px}
+  .cold{color:var(--cold)} .ok{color:var(--ok)} .warn{color:var(--warn)} .dang{color:var(--dang)}
+  /* grid cards */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:20px}
+  .card h3{margin:0 0 10px;font-size:16px}
+  .card p{margin:6px 0;color:var(--muted);font-size:14.5px}
+  .card ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+  .card li{margin:5px 0}
+  /* callout */
+  .bomb{background:linear-gradient(135deg,#2a0f12,#1a0c10);border:1px solid #6b2230;border-radius:16px;
+    padding:22px 24px;display:flex;gap:18px;align-items:flex-start}
+  .bomb .ic{font-size:30px;line-height:1}
+  .bomb h3{margin:0 0 6px;color:#ff8a8a;font-size:19px}
+  .bomb p{margin:5px 0;color:#e6c3c7;font-size:14.5px}
+  .bomb .proof{margin-top:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+    color:#ffb4b4;background:#160a0d;border:1px solid #3a1a20;border-radius:8px;padding:8px 11px;overflow-x:auto}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+  tbody tr:hover{background:#0f1927}
+  td b{color:var(--txt)}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  /* org */
+  .org{display:grid;gap:14px}
+  .orgrow{display:grid;gap:12px}
+  .r3{grid-template-columns:repeat(3,1fr)} .r4{grid-template-columns:repeat(4,1fr)}
+  .person{background:#0e1621;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .person.boss{border-color:var(--cold2);background:linear-gradient(160deg,#0e2233,#0c1622);box-shadow:0 0 0 1px #0e3350 inset}
+  .person .nm{font-weight:700;font-size:14.5px}
+  .person .ro{color:var(--muted);font-size:12.5px}
+  .person .an{color:var(--dim);font-size:11px;margin-top:3px}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.4px;padding:2px 7px;border-radius:999px;margin-bottom:5px}
+  .pill.dir{background:#0e3350;color:var(--cold)} .pill.com{background:#153021;color:var(--ok)}
+  .pill.adv{background:#31240c;color:var(--warn)} .pill.tec{background:#231633;color:#c4a2ff}
+  /* axes */
+  .axe{display:grid;grid-template-columns:44px 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .axe:last-child{border-bottom:0}
+  .axe .num{font-size:24px;font-weight:800;color:var(--cold);opacity:.6}
+  .axe h3{margin:0 0 4px;font-size:16.5px}
+  .axe p{margin:0;color:var(--muted);font-size:14px}
+  .axe .why{color:var(--dim);font-size:12.5px;margin-top:6px}
+  /* pitch */
+  .pitch{background:linear-gradient(135deg,#082033,#0a1420);border:1px solid var(--cold2);border-radius:18px;padding:30px 32px}
+  .pitch .q{font-size:21px;line-height:1.5;font-weight:600}
+  .pitch .q b{color:var(--cold)}
+  footer{padding:34px 0 60px;color:var(--dim);font-size:12.5px}
+  .src{color:var(--dim);font-size:11.5px;margin-top:10px}
+  .flag{display:inline-block;background:#160a0d;border:1px solid #3a1a20;color:#ff9a9a;font-size:11px;
+    padding:2px 8px;border-radius:6px;font-weight:700}
+  @media(max-width:820px){.g2,.g3,.r3,.r4{grid-template-columns:1fr}.axe{grid-template-columns:1fr}}
+  @media print{nav{display:none}body{background:#fff;color:#111}.card,.kpi{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="brand">FROID <span>BORNET</span> · 360°</div>
+  <a href="#synth">Summary</a>
+  <a href="#legal">Company &amp; legal status</a>
+  <a href="#org">Org chart</a>
+  <a href="#conc">Competitors</a>
+  <a href="#marche">Market</a>
+  <a href="#refs">References</a>
+  <a href="#marches">Public contracts</a>
+  <a href="#seo">SEO gap</a>
+  <a href="#digital">Digital audit</a>
+  <a href="#axes">Automation</a>
+  <a href="#renforts">Jonction reinforcements</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="kicker">Meeting briefing — prepared by Jonction · June 2, 2026</div>
+  <h1>Le Froid Bornet,<br><b>under the scanner.</b></h1>
+  <p class="sub">Everything we were able to piece together about your company — legal entity, team, competitors, market and digital presence — from 100% open sources, in just a few hours. This is what a well-piloted machine sees of you.</p>
+  <div class="tags">
+    <span class="tag">FCIR · SAS · SIREN <b>314 490 293</b></span>
+    <span class="tag">L'Haÿ-les-Roses (94)</span>
+    <span class="tag">Since <b>1978</b> · 4th generation</span>
+    <span class="tag"><b>GIF</b> network</span>
+    <span class="tag">Collective agreement <b>IDCC 1412</b></span>
+  </div>
+</div></header>
+
+<!-- SUMMARY -->
+<section id="synth"><div class="wrap">
+  <h2>Express summary</h2>
+  <div class="h2sub">The numbers that identify you — verified against the registry</div>
+  <div class="kpis">
+    <div class="kpi"><div class="n cold">€15.24M</div><div class="l">2024 revenue</div><div class="d">Fiscal year ended 03/31/2025</div></div>
+    <div class="kpi"><div class="n ok">€538k</div><div class="l">2024 net income</div><div class="d">Net margin ≈ 3.5%</div></div>
+    <div class="kpi"><div class="n">41</div><div class="l">Employees (declared on LinkedIn)</div><div class="d">32 profiles identified by name</div></div>
+    <div class="kpi"><div class="n">€135,740</div><div class="l">Share capital</div><div class="d">SAS · Statutory auditor: FIPAR Audit</div></div>
+    <div class="kpi"><div class="n warn">2.7/5</div><div class="l">Indeed employer rating</div><div class="d">Visible to your job candidates</div></div>
+    <div class="kpi"><div class="n dang">&lt; 5,000</div><div class="l">Website visits/month (est.)</div><div class="d">Below the SimilarWeb measurement threshold</div></div>
+  </div>
+
+  <div style="margin-top:22px" class="grid g2">
+    <div class="card">
+      <h3>✅ A healthy, solid company</h3>
+      <ul>
+        <li>Trade register (RCS) <b>active</b>, <b>no insolvency proceedings</b> (26 BODACC notices verified)</li>
+        <li>Accounts filed up to date — latest filing for FY ended 03/31/2025, published 01/16/2026</li>
+        <li>Growth and hiring: <b>5 permanent positions open</b> today</li>
+        <li>Loyal team: 15 to 27 years of tenure among management</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🎯 A brand-new group structure</h3>
+      <ul>
+        <li><b>NEORES</b> holding company created on <b>03/17/2026</b> (Jérôme Bornet, president)</li>
+        <li>"Management change" amendment published in BODACC on <b>02/13/2026</b></li>
+        <li><b>4 family real-estate companies (SCI)</b> active at the same registered address (Nouvel Avenir 1 &amp; 2, Blaise Pascal, J&amp;J Charenton)</li>
+        <li>Signal: succession / rise of the 4th generation underway</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<!-- LEGAL -->
+<section id="legal"><div class="wrap">
+  <h2>Company &amp; legal status</h2>
+  <div class="h2sub">Family governance, across three generations</div>
+  <div class="grid g3">
+    <div class="card">
+      <h3>Sylvie Bornet</h3>
+      <p>Chair of the Supervisory Board · born 1948</p>
+      <p class="src">Founding generation · 18 years on LinkedIn</p>
+    </div>
+    <div class="card">
+      <h3>Pascal Bornet</h3>
+      <p>Member of the Supervisory Board · born 1965</p>
+      <p class="src">Middle generation</p>
+    </div>
+    <div class="card" style="border-color:var(--cold2)">
+      <h3>Jérôme Bornet <span class="pill dir">DECISION-MAKER</span></h3>
+      <p>President of the SAS / Managing Director · born 1988</p>
+      <p class="src">4th generation · displays GIF on his profile · runs the NEORES holding</p>
+    </div>
+  </div>
+
+  <div style="margin-top:16px" class="grid g2">
+    <div class="card">
+      <h3>Legal identity</h3>
+      <ul>
+        <li>Legal name: <b>FROID CUISINES INDUSTRIELLES RESTAURATION (FCIR)</b></li>
+        <li>Form: SAS · NAF code <b>33.20B</b> (equipment installation) · founded 1978</li>
+        <li>Registered office: 63 rue de Bicêtre · 2nd establishment: 47 av. du Général Leclerc (trade name <b>BORNET.PRO</b>, opened Oct. 2020)</li>
+        <li>Refrigeration / professional-kitchen collective agreement — <b>IDCC 1412</b></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Recent registry history (BODACC)</h3>
+      <ul>
+        <li><b>02/13/2026</b> — management change amendment</li>
+        <li><b>01/16/2026</b> — accounts filed (FY ended 03/31/2025)</li>
+        <li>Regular annual filings since 2012 · offset fiscal year, April → March</li>
+        <li>Last capital change: 2021 · no red flags</li>
+      </ul>
+    </div>
+  </div>
+  <p class="src">Sources: recherche-entreprises.api.gouv.fr · BODACC (data.gouv) · INSEE/Sirene · societe.com. 2024 financials: public data from filed accounts.</p>
+</div></section>
+
+<!-- ORG -->
+<section id="org"><div class="wrap">
+  <h2>Reconstructed org chart</h2>
+  <div class="h2sub">32 employees found by name on LinkedIn — without ever setting foot on your premises</div>
+
+  <div class="org">
+    <div class="orgrow r3">
+      <div class="person boss"><span class="pill dir">MANAGEMENT</span><div class="nm">Jérôme Bornet</div><div class="ro">Managing Director</div><div class="an">18 yrs 7 mo</div></div>
+      <div class="person boss"><span class="pill dir">MANAGEMENT</span><div class="nm">Sylvie Bornet</div><div class="ro">President</div><div class="an">18 yrs 7 mo</div></div>
+      <div class="person boss"><span class="pill dir">HR / FINANCE</span><div class="nm">Patricia Farhat</div><div class="ro">CFO &amp; HR Director</div><div class="an">27 yrs 8 mo — a pillar of the company</div></div>
+    </div>
+    <div class="orgrow r3">
+      <div class="person"><span class="pill dir">TECHNICAL</span><div class="nm">Jean-Paul Moulia</div><div class="ro">Technical Director</div><div class="an">17 yrs 9 mo</div></div>
+      <div class="person"><span class="pill dir">TECHNICAL</span><div class="nm">Jorge Da Silva</div><div class="ro">Technical Director</div><div class="an">5 yrs 9 mo</div></div>
+      <div class="person"><span class="pill dir">PROJECTS</span><div class="nm">Pierre-Julien Niderkorn</div><div class="ro">Works Director</div><div class="an">11 yrs 10 mo</div></div>
+    </div>
+    <div class="orgrow r4">
+      <div class="person"><span class="pill com">SALES</span><div class="nm">Fabien Grenier</div><div class="ro">Sales Representative</div></div>
+      <div class="person"><span class="pill com">SALES</span><div class="nm">Maixent Hadrot</div><div class="ro">Area Sales Executive</div></div>
+      <div class="person"><span class="pill com">SALES</span><div class="nm">Sophie Rodriguez</div><div class="ro">Technical Sales Rep</div></div>
+      <div class="person"><span class="pill com">SALES</span><div class="nm">Bruno Saunier</div><div class="ro">Business Engineer</div></div>
+      <div class="person"><span class="pill com">SALES</span><div class="nm">Killian Fourgeaud</div><div class="ro">Account Manager</div></div>
+      <div class="person"><span class="pill com">SALES</span><div class="nm">Manuel Gonçalves</div><div class="ro">Account Manager</div></div>
+      <div class="person"><span class="pill com">SALES</span><div class="nm">Florent Berry</div><div class="ro">Account Manager</div></div>
+      <div class="person"><span class="pill com">SALES</span><div class="nm">Romain Fleau</div><div class="ro">Technical Sales Rep</div><div class="an">joined 1 month ago</div></div>
+    </div>
+    <div class="orgrow r4">
+      <div class="person"><span class="pill adv">COST ESTIMATING</span><div class="nm">Julie Massé</div><div class="ro">Head of Cost Estimating</div><div class="an">⚠ position under strain — 1 permanent role open</div></div>
+      <div class="person"><span class="pill adv">ENGINEERING</span><div class="nm">Walther Ecouledina</div><div class="ro">Head of Engineering &amp; Works</div></div>
+      <div class="person"><span class="pill adv">BIM</span><div class="nm">O. Pandourangane</div><div class="ro">BIM Draftsman-Designer</div></div>
+      <div class="person"><span class="pill adv">SALES ADMIN / AFTER-SALES</span><div class="nm">Patricia Nicolas</div><div class="ro">Administrative Manager, After-Sales Dept.</div><div class="an">19 yrs 1 mo</div></div>
+    </div>
+    <div class="orgrow r4">
+      <div class="person"><span class="pill tec">FIELD</span><div class="nm">Steeve Blanchard</div><div class="ro">Refrigeration Technician</div></div>
+      <div class="person"><span class="pill tec">FIELD</span><div class="nm">Tony Gacic</div><div class="ro">Refrigeration Engineer</div></div>
+      <div class="person"><span class="pill tec">FIELD</span><div class="nm">Franck Berard</div><div class="ro">Kitchen Fitter Technician</div><div class="an">18 yrs 11 mo</div></div>
+      <div class="person"><span class="pill tec">+ ~5</span><div class="nm">Technical team</div><div class="ro">refrigeration / commercial kitchen / electrical</div></div>
+    </div>
+  </div>
+  <p class="src">Company page: <b>997 followers</b> · declared headcount 41 · last post ~6 months ago. Cost of the full team scan: <b>≈ €0.20</b>. Source: LinkedIn (via Apify) + lefroidbornet.fr.</p>
+</div></section>
+
+<!-- COMPETITORS -->
+<section id="conc"><div class="wrap">
+  <h2>Competitive landscape — Île-de-France</h2>
+  <div class="h2sub">The market is consolidating under LBOs while you remain independent</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Player</th><th>Size</th><th>Positioning</th><th>Digital strength</th></tr></thead>
+      <tbody>
+        <tr><td><b>Quiétalis</b><br><span class="src">Bièvres (91)</span></td><td>Revenue <b>€83.5M</b><br>net income −€2.4M<br>250-499 employees · 26 branches</td><td>#1 independent in installation + maintenance. 2,500 sites under contract, 120,000 service calls/year. 4 acquisitions since 2020.</td><td><b>The benchmark</b>: real-time client extranet, CMMS, reports signed on tablet, quotes guaranteed within 24-48h, emergency response &lt; 1h.</td></tr>
+        <tr><td><b>ECF Group</b><br><span class="src">Grigny (91)</span></td><td>Revenue <b>€760M</b><br>1,750 employees · 12 countries</td><td>Omnichannel distributor (Naxicap fund). Just acquired Coldis and Pro Inox.</td><td>Direct threat to <b>bornet-pro.fr</b>: industrialized e-commerce, pricing firepower.</td></tr>
+        <tr><td><b>Fomma</b><br><span class="src">Malakoff (92)</span></td><td>20-49 employees</td><td>Your near-twin: family-owned, ~75 years old, installation + after-sales in the Paris region, <b>also a GIF member</b>.</td><td>Modern website, <b>very strong SEO</b> for "professional kitchen installer Paris", CSR page.</td></tr>
+        <tr><td><b>Ets Pichard</b><br><span class="src">Aulnay (93)</span></td><td>SME</td><td>Installation + industrial refrigeration, Paris region + Rouen/Lille/Reims.</td><td><b>Aggressive local SEO</b>: one page per département (75/77/93/94…). Captures the Google traffic you don't.</td></tr>
+        <tr><td><b>C2M</b><br><span class="src">Rosny (93)</span></td><td>SME · 30 years</td><td>Head-on competitor in <b>after-sales service</b> (large projects are a minority of their business).</td><td>Simple brochure website.</td></tr>
+        <tr><td><b>Groupe SEBI</b><br><span class="src">Normandy / Paris region</span></td><td>Multi-site SME</td><td>Hospitality + institutional catering.</td><td>Local SEO pages — including Rungis &amp; Paris 16th.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Sources: Pappers · Finyear · lacuisinepro.fr · ecf.fr / CFNEWS · fomma.fr · pichard-froid.fr · c2m-cuisine.com · groupesebi.com. "Vauconsant" = manufacturer (not a competing installer); "SFCP/Benoit Guyot" unconfirmed.</p>
+</div></section>
+
+<!-- MARKET -->
+<section id="marche"><div class="wrap">
+  <h2>Market &amp; regulation</h2>
+  <div class="h2sub">A wave of demand is coming — driven by legislation</div>
+  <div class="kpis">
+    <div class="kpi"><div class="n cold">€6.98B</div><div class="l">Refrigeration/pro-kitchen industry revenue (IDCC 1412)</div><div class="d">+8% vs 2021 · 2,700 companies, 91% &lt; 20 employees</div></div>
+    <div class="kpi"><div class="n cold">€21.4B</div><div class="l">Institutional catering (your clients)</div><div class="d">+2.3%/year · 7.3 billion meals/year</div></div>
+    <div class="kpi"><div class="n">14.5%</div><div class="l">Share of contract-based maintenance</div><div class="d">Under-exploited recurring revenue = untapped potential</div></div>
+    <div class="kpi"><div class="n warn">+4,000</div><div class="l">Refrigeration technicians hired/year — a sector in shortage</div><div class="d">58% of the industry wants to hire within 12 months</div></div>
+  </div>
+  <div style="margin-top:18px" class="grid g3">
+    <div class="card">
+      <h3>🧊 F-Gas III</h3>
+      <p>Since <b>01/01/2025</b>, refrigerants with GWP ≥ 2500 (R404A…) are <b>banned for maintenance</b>. GWP ≥ 750 banned in 2032.</p>
+      <p class="why">→ A massive wave of replacement / retrofit across all your clients. A golden re-engagement argument.</p>
+    </div>
+    <div class="card">
+      <h3>🏢 Tertiary Decree</h3>
+      <p>Buildings &gt; 1,000 m² (central kitchens, care homes, schools): <b>−40% energy by 2030</b>, annual OPERAT declaration.</p>
+      <p class="why">→ Sell energy-efficient equipment + monitoring contracts.</p>
+    </div>
+    <div class="card">
+      <h3>🥗 EGalim</h3>
+      <p>50% sustainable / 20% organic mandatory. Actual 2024 figures: <b>29.5% / 11.8%</b>, only <b>24% compliant</b>. End of plastic cookware.</p>
+      <p class="why">→ School canteens are reinvesting (vegetable prep rooms, stainless steel, reheating equipment).</p>
+    </div>
+  </div>
+  <p class="src">Sources: SNEFCCA 2024 industry survey (Xerfi) · SYNETAM/Promocuisines · asha.one · EUR-Lex 2024/573 · Légifrance · ma-cantine.agriculture.gouv.fr · frigoristes.fr.</p>
+</div></section>
+
+<!-- REFERENCES -->
+<section id="refs"><div class="wrap">
+  <h2>Your references</h2>
+  <div class="h2sub">Prestigious projects… lying dormant (no case studies, no posts)</div>
+  <div class="grid g3">
+    <div class="card"><h3>🏛️ Prestige &amp; heritage</h3><ul>
+      <li><b>Louvre Saint-Honoré</b> (2024)</li>
+      <li><b>American Hospital of Paris</b> (Neuilly, 2022)</li>
+      <li><b>Tour Pleyel</b> (Saint-Denis, 2024)</li>
+    </ul></div>
+    <div class="card"><h3>🏢 Major corporate headquarters</h3><ul>
+      <li><b>Kaufman &amp; Broad</b> (2022)</li>
+      <li><b>Publicis Sapient</b> (2019) · <b>Orange</b> Bridge (2021)</li>
+      <li>Watt &amp; Ampère towers — La Défense (2020)</li>
+    </ul></div>
+    <div class="card"><h3>🎓 Local government &amp; education</h3><ul>
+      <li>Lycée Nadar (Draveil)</li>
+      <li>Chérioux (Vitry) &amp; M. Leclerc (Puteaux) secondary schools</li>
+      <li>Jacques Brel school complex (Villiers-sur-Marne)</li>
+    </ul></div>
+  </div>
+  <p class="src">12 projects published on lefroidbornet.fr — <b>0 SEO case studies, 0 social media posts</b>. Every project is content already paid for that earns nothing. Source: lefroidbornet.fr/realisations.</p>
+</div></section>
+
+<!-- PUBLIC CONTRACTS -->
+<section id="marches"><div class="wrap">
+  <h2>Public contracts</h2>
+  <div class="h2sub">An active contract holder — a recurring, under-managed goldmine</div>
+  <div class="kpis" style="margin-bottom:18px">
+    <div class="kpi"><div class="n cold">15</div><div class="l">Public contracts awarded</div><div class="d">DECP open data · 2019-2022</div></div>
+    <div class="kpi"><div class="n cold">~€3.6M</div><div class="l">Gross awarded total</div><div class="d">Purchase-order ceilings</div></div>
+    <div class="kpi"><div class="n">48 months</div><div class="l">Multi-year maintenance contracts</div><div class="d">Recurring revenue = company value</div></div>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Public buyer</th><th>Scope</th><th>Amount</th></tr></thead>
+      <tbody>
+        <tr><td>Saint-Maur-des-Fossés</td><td>Refrigeration / cooking / small equipment maintenance (3 lots, 48 months)</td><td><b>3 × €600,000</b></td></tr>
+        <tr><td>Malakoff</td><td>Hot / cold / dishwashing / laundry maintenance</td><td>€282,768</td></tr>
+        <tr><td>Créteil social services (CCAS)</td><td>Appliance maintenance</td><td>€200,000</td></tr>
+        <tr><td>City of Paris, Puteaux, Charenton, Yerres, Versailles…</td><td>Supply &amp; installation of kitchen equipment (schools)</td><td>multiple lots</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Mixed activity: installation (project-based) + recurring maintenance across a multi-municipality equipment base → ideal ground for automating scheduling, CMMS, tender responses and purchase-order invoicing. Source: DECP API data.economie.gouv.fr (SIREN 314490293).</p>
+</div></section>
+
+<!-- SEO GAP -->
+<section id="seo"><div class="wrap">
+  <h2>SEO gap — the hole in the net</h2>
+  <div class="h2sub">Invisible on 10 out of 10 commercial queries tested</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Query (purchase intent)</th><th>Who captures the customer</th><th>Bornet?</th></tr></thead>
+      <tbody>
+        <tr><td>professional kitchen installer Paris</td><td>Fomma, Pichard, Restart</td><td><span class="badge b-red">ABSENT</span></td></tr>
+        <tr><td>professional kitchen maintenance Île-de-France</td><td>C2M, SEBI, Fomma</td><td><span class="badge b-red">ABSENT</span></td></tr>
+        <tr><td>commercial refrigeration repair 94</td><td>Redsof, DFM, Le Frigoriste (dept. 94 page)</td><td><span class="badge b-red">ABSENT</span></td></tr>
+        <tr><td><b>professional kitchen fitter L'Haÿ-les-Roses</b> (their own town)</td><td>Les Artisans Frigoristes (dedicated L'Haÿ page)</td><td><span class="badge b-red">ABSENT</span></td></tr>
+        <tr><td>institutional commercial kitchen installation Paris region</td><td>SEBI (per-city pages), C2M</td><td><span class="badge b-red">ABSENT</span></td></tr>
+        <tr><td>care-home kitchen maintenance contract Paris region</td><td>SEBI, PB Maintenance</td><td><span class="badge b-red">ABSENT</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:16px" class="grid g3">
+    <div class="kpi"><div class="n dang">~12</div><div class="l">Indexed pages on lefroidbornet.fr</div><div class="d">Corporate pages only</div></div>
+    <div class="kpi"><div class="n">40-60</div><div class="l">Fomma pages (+ active blog)</div></div>
+    <div class="kpi"><div class="n">50-80</div><div class="l">Pichard pages (département × service matrix)</div></div>
+  </div>
+  <p class="src">In its own town, a competitor captures the local traffic Bornet should own by default. ~80-90 local intent-driven queries left uncaptured, for lack of pages. Bonus: an old legacy site on <code>http://</code> is still indexed in parallel (SEO dilution).</p>
+</div></section>
+
+<!-- DIGITAL -->
+<section id="digital"><div class="wrap">
+  <h2>Digital audit</h2>
+  <div class="h2sub">Where it hurts — and where everything can be demonstrated live</div>
+
+  <div class="bomb" style="margin-bottom:16px">
+    <div class="ic">💣</div>
+    <div>
+      <h3>Your online store bornet-pro.fr no longer exists — the domain is up for grabs</h3>
+      <p>The link is <b>still in the footer</b> of your website. One click in a meeting = a browser error. The domain isn't even reserved anymore: <b>anyone — a competitor — can buy it for ~€7/year</b>, even though "BORNET.PRO" has been your registered trade name in the Sirene registry since 2020.</p>
+      <div class="proof">$ curl https://rdap.nic.fr/domain/bornet-pro.fr  →  "No domain corresponding to bornet-pro.fr has been found"</div>
+    </div>
+  </div>
+
+  <div class="bomb" style="margin-bottom:22px;background:linear-gradient(135deg,#2a1e0a,#1a140a);border-color:#6b5222">
+    <div class="ic">⏳</div>
+    <div>
+      <h3 style="color:#ffd68a">Your main domain expires on 09/05/2026 — in 3 months</h3>
+      <p style="color:#e7d3a8">Held at a consumer-grade registrar (Nordnet), with no agency monitoring it. "This is exactly how you lost bornet-pro.fr."</p>
+    </div>
+  </div>
+
+  <div class="bomb" style="margin:0 0 22px">
+    <div class="ic">📞</div>
+    <div>
+      <h3>A B2B customer lost at the front desk — written in black and white in your reviews</h3>
+      <p>1★ Google review: "<i>The lady on the phone: the company has chosen to sell only to public institutions and not to businesses… Truly incompetent</i>". A prospect who wanted to buy, turned away at reception, never called back. You close at 5pm and on weekends: every evening breakdown goes to a competitor.</p>
+      <div class="proof">Google rating 4.1/5 · 28 reviews in 10 years · the business replied to only 1 review out of 28 (3.6%)</div>
+    </div>
+  </div>
+
+  <div class="grid g3">
+    <div class="card"><h3>Ghost SEO</h3><ul>
+      <li><b>0 blog articles</b> (23 pages total)</li>
+      <li>H1 = "Kitchen installer" — <b>with no geo keyword whatsoever</b> (neither Paris nor 94)</li>
+      <li>Invisible on "professional kitchen maintenance Île-de-France"</li>
+      <li>A URL from the old site still returns an indexed 404</li>
+    </ul></div>
+    <div class="card"><h3>Frozen website</h3><ul>
+      <li>WordPress + Elementor, images uploaded in <b>July 2021</b></li>
+      <li>PHP 8.1 (security end-of-life) and versions exposed</li>
+      <li>&lt; 5,000 visits/month (below the SimilarWeb threshold)</li>
+      <li>18 years of domain age… left unexploited</li>
+    </ul></div>
+    <div class="card"><h3>Reputation &amp; social media</h3><ul>
+      <li>Google: <b>4.1/5</b> but from <b>28 reviews in 10 years</b> (&lt; 3/year)</li>
+      <li>Business reply rate to reviews: <b>3.6%</b> (1 out of 28)</li>
+      <li>LinkedIn ~1 post/6 months · <b>zero Facebook / Instagram</b></li>
+      <li>Indeed employer rating <b>2.7/5</b> — visible to your job candidates</li>
+    </ul></div>
+  </div>
+  <p class="src">Verifiable live: click the footer link · pagespeed.web.dev · <code>curl https://lefroidbornet.fr</code> (WP generator tag) · sitemap_index.xml · Wayback Machine (bornet-pro snapshots 01 &amp; 03/2023).</p>
+</div></section>
+
+<!-- AXES -->
+<section id="axes"><div class="wrap">
+  <h2>What Jonction automates for you</h2>
+  <div class="h2sub">5 levers, aligned with your real pain points</div>
+
+  <div class="axe"><div class="num">01</div><div>
+    <h3>After-sales dispatch &amp; scheduling</h3>
+    <p>Automatic triage of requests (email/phone → qualified ticket), assignment by skill &amp; proximity, optimized routes.</p>
+    <p class="why">Repair work = 24% of industry revenue. Quiétalis promises &lt; 1h with 220 technicians; you compete through optimization, not headcount.</p>
+  </div></div>
+  <div class="axe"><div class="num">02</div><div>
+    <h3>Service reports → invoicing</h3>
+    <p>Field entry on mobile → time-stamped report → invoice → payment follow-up, with no re-keying.</p>
+    <p class="why">You're recruiting an accounts-payable accountant: invoice/delivery-note reconciliation is largely automatable.</p>
+  </div></div>
+  <div class="axe"><div class="num">03</div><div>
+    <h3>Semi-automatic quotes &amp; pricing</h3>
+    <p>Photo / part number → pre-filled quote drawing on the 700,000 references in the GIF catalog.</p>
+    <p class="why">You're opening a permanent "Cost Estimator" position: the role is saturated. The competitive standard = quotes guaranteed within 24-48h.</p>
+  </div></div>
+  <div class="axe"><div class="num">04</div><div>
+    <h3>Follow-ups &amp; contract recurrence</h3>
+    <p>Chasing dormant quotes, renewing contracts, targeted campaigns to school canteens &amp; care homes.</p>
+    <p class="why">"Your R404A equipment has been unmaintainable since 01/01/2025" — an F-Gas/EGalim argument that triggers projects.</p>
+  </div></div>
+  <div class="axe"><div class="num">05</div><div>
+    <h3>Reputation, local SEO &amp; technician sourcing</h3>
+    <p>Automatic collection of Google reviews after each service call, SEO pages per département, sourcing of technicians amid the shortage.</p>
+    <p class="why">Pichard &amp; SEBI capture the local traffic; you don't. And 58% of the industry is trying to hire — that's Jonction's core business.</p>
+  </div></div>
+
+  <div class="pitch" style="margin-top:30px">
+    <div class="q">"The market is consolidating under LBOs — <b>Quiétalis €83M, ECF €760M</b> — while F-Gas and EGalim regulations are creating a demand boom. For a 4th-generation family company, the way to stay <b>independent</b> and grow is the pairing: <b>an AI that triages, prices and follows up + a dedicated assistant who pilots it and picks up the phone</b> — at <b>€1,500/month, 3× cheaper than a hire</b>, with no payroll charges or HR management, in a market where even technicians are impossible to find."</div>
+  </div>
+</div></section>
+
+<!-- JONCTION REINFORCEMENTS -->
+<section id="renforts"><div class="wrap">
+  <h2>Your Jonction reinforcements — dedicated team</h2>
+  <div class="h2sub">Automation is the engine. A dedicated person is the pilot.</div>
+  <p class="desc" style="color:var(--muted);max-width:760px;margin:-14px 0 24px">Software doesn't answer the phone at 8pm, doesn't follow up with an unhappy customer, doesn't make outbound calls to school canteens. Every automation is <b>piloted by a dedicated French-speaking assistant based in Madagascar</b> (phone gateway with a French number), at <b>€1,500/month all-inclusive</b>.</p>
+
+  <div class="tbl-wrap" style="margin-bottom:22px">
+    <table>
+      <thead><tr><th>Dedicated reinforcement</th><th>What they do for you — targeting the pain points we found</th></tr></thead>
+      <tbody>
+        <tr><td><b>Telemarketer / switchboard</b><br><span class="src">dedicated phone gateway</span></td><td>Catches calls after 5pm &amp; on weekends (no more leads lost at the front desk) · qualifies requests · <b>outbound prospecting</b> to school canteens &amp; care homes to sell maintenance contracts.</td></tr>
+        <tr><td><b>Sales / order-admin assistant</b></td><td>Pre-fills quotes (the estimator role you're hiring for) · chases dormant quotes · <b>renews the 48-month contracts</b> · assembles tender submissions.</td></tr>
+        <tr><td><b>Administrative assistant</b></td><td>Supplier data entry &amp; reconciliation (the open accountant position) · manages public-contract purchase orders · <b>solicits &amp; replies to Google reviews</b> (3.6% today).</td></tr>
+        <tr><td><b>Marketing / content assistant</b></td><td>Recycles your 12 flagship projects (Louvre, American Hospital…) into LinkedIn/Instagram posts · feeds the missing local SEO blog.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>The cost, no beating around the bush</h3>
+      <div class="row"><span class="k">Assistant / order admin in France (full cost)</span><span class="v dang">~€3,800/month</span></div>
+      <div class="row"><span class="k">Jonction reinforcement — all-inclusive</span><span class="v ok">€1,500/month</span></div>
+      <div class="row"><span class="k">Savings per position</span><span class="v">−€2,300/month</span></div>
+      <div class="row"><span class="k">Over one year</span><span class="v cold">−€27,600/year</span></div>
+      <p class="src" style="margin-top:10px">France = gross salary with charges + leave/absences + recruiting/HR + workstation. Jonction: no payroll charges, no HR, no commitment.</p>
+    </div>
+    <div class="card" style="border-color:var(--cold2)">
+      <h3>The break-even point</h3>
+      <p style="color:var(--muted);font-size:14.5px">An institutional kitchen project or a maintenance contract is worth anywhere from several thousand to several tens of thousands of euros.</p>
+      <div class="pitch" style="padding:18px 20px;margin-top:10px">
+        <div class="q" style="font-size:18px"><b>A single lead recovered per month</b> — the one that walks away at 5:01pm today — and the reinforcement <b>pays for itself several times over</b>.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <b>Briefing prepared by Jonction</b> — French-speaking outsourcing &amp; automation. Data 100% from open sources (public registries, LinkedIn, web) collected on June 2, 2026. Financial figures = public account filings. Some items (exact Google rating, PageSpeed) should be re-run live for demonstration effect.
+  <div class="src" style="margin-top:14px">recherche-entreprises.api.gouv.fr · BODACC · INSEE/Sirene · LinkedIn (Apify) · SNEFCCA/Xerfi · EUR-Lex · Légifrance · SimilarWeb · RDAP · pagespeed.web.dev</div>
+</div></footer>
+
+</body>
+</html>
