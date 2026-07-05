@@ -1,0 +1,198 @@
+<!--
+  Template du rapport "dossier entreprise".
+  Remplacer tous les jetons {{...}} ; dupliquer les blocs marqués "RÉPÉTER".
+  Le fichier doit rester autonome (aucune ressource externe) et gérer clair/sombre.
+  Exemple complet rempli : dossier-briand-villiers-sur-marne.html (commit initial de ce skill).
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dossier — {{DENOMINATION}} ({{VILLE}})</title>
+<style>
+  :root {
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10); --series: #2a78d6;
+    --good: #0ca30c; --good-text: #006300; --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
+      --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
+      --border: rgba(255,255,255,0.10); --series: #3987e5; --good-text: #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
+    --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
+    --border: rgba(255,255,255,0.10); --series: #3987e5; --good-text: #0ca30c;
+  }
+  :root[data-theme="light"] {
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10); --series: #2a78d6; --good-text: #006300;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 64px; }
+  header .kicker { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+  h1 { font-size: 28px; margin: 6px 0 2px; }
+  .sub { color: var(--ink-2); margin: 0 0 10px; }
+  .badge { display: inline-block; font-size: 13px; font-weight: 600; padding: 2px 10px;
+           border-radius: 999px; border: 1px solid var(--border);
+           color: var(--good-text); background: color-mix(in srgb, var(--good) 12%, transparent); }
+  .badge.bad { color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  section { margin-top: 36px; }
+  h2 { font-size: 19px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--grid); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .tile .label { color: var(--ink-2); font-size: 13px; }
+  .tile .value { font-size: 26px; font-weight: 700; margin-top: 2px; }
+  .tile .note { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  thead th { color: var(--ink-2); font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--grid) 35%, var(--surface)); }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul { margin: 8px 0 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  a { color: var(--series); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } }
+  .chart { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 18px 10px; }
+  .chart .title { font-size: 14px; font-weight: 600; }
+  .chart .subtitle { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; }
+  .bars { display: flex; align-items: flex-end; gap: 14px; height: 160px; border-bottom: 1px solid var(--baseline); }
+  .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; position: relative; }
+  .bar .fill { width: 60%; max-width: 44px; background: var(--series); border-radius: 4px 4px 0 0; }
+  .bar:hover .fill { filter: brightness(1.12); }
+  .bar .val { font-size: 11.5px; color: var(--ink-2); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+  .bar .nd { font-size: 11.5px; color: var(--muted); position: absolute; bottom: 6px; }
+  .xlab { display: flex; gap: 14px; margin-top: 6px; }
+  .xlab span { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
+  .foot { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">Dossier entreprise · scan du {{DATE_SCAN}}</div>
+    <h1>{{DENOMINATION}}</h1>
+    <p class="sub">{{DESCRIPTION_COURTE}} — {{ADRESSE_SIEGE}}</p>
+    <!-- badge : classe "badge" si sain, "badge bad" si cessée / procédure collective -->
+    <span class="badge">{{ETAT}}</span>
+    <div class="meta">SIREN {{SIREN}} · SIRET siège {{SIRET}} · RCS {{GREFFE}} · {{FORME_JURIDIQUE}} au capital de {{CAPITAL}}</div>
+  </header>
+
+  <section>
+    <h2>Chiffres clés</h2>
+    <div class="tiles">
+      <!-- RÉPÉTER : 3 à 4 tuiles (CA, résultat net, effectif, ancienneté) -->
+      <div class="tile"><div class="label">{{KPI_LABEL}}</div><div class="value">{{KPI_VALEUR}}</div><div class="note">{{KPI_NOTE}}</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Fiche d'identité</h2>
+    <div class="tablewrap">
+    <table>
+      <!-- RÉPÉTER : une ligne par champ (dénomination, SIREN, forme, création, siège,
+           NAF, effectif, catégorie, certifications, conventions collectives, site web) -->
+      <tr><td>{{CHAMP}}</td><td>{{VALEUR}}</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Activité</h2>
+    <div class="card">{{ACTIVITE_DESCRIPTION_ET_LISTE_METIERS}}</div>
+  </section>
+
+  <section>
+    <h2>Gouvernance</h2>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Rôle</th><th>Titulaire</th></tr></thead>
+      <!-- RÉPÉTER : une ligne par dirigeant / CAC -->
+      <tr><td>{{ROLE}}</td><td>{{TITULAIRE}}</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Finances</h2>
+    <div class="chart">
+      <div class="title">Chiffre d'affaires — exercices publiés (INPI)</div>
+      <div class="subtitle">En millions d'euros · exercices manquants = dépôt confidentiel</div>
+      <div class="bars">
+        <!-- RÉPÉTER : une div.bar par exercice, height en % du max.
+             Direct labels sur premier et dernier exercice seulement (.val) ;
+             exercice non publié : pas de .fill, mettre <span class="nd">n.d.</span>.
+             title="AAAA : X XXX XXX €" sur chaque .bar pour le survol. -->
+        <div class="bar" title="{{ANNEE}} : {{CA_EXACT}} €"><div class="fill" style="height:{{PCT}}%"></div></div>
+      </div>
+      <div class="xlab"><!-- RÉPÉTER : <span>{{ANNEE}}</span> --></div>
+      <div class="foot">Source : ratios INPI-BCE (data.economie.gouv.fr). Détail complet dans le tableau ci-dessous.</div>
+    </div>
+    <br>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Exercice clos</th><th class="num">Chiffre d'affaires</th><th class="num">Résultat net</th><th class="num">EBE</th><th class="num">Liquidité générale</th><th class="num">Taux d'endettement</th></tr></thead>
+      <!-- RÉPÉTER : une ligne par exercice publié -->
+      <tr><td>{{DATE_CLOTURE}}</td><td class="num">{{CA}} €</td><td class="num">{{RN}} €</td><td class="num">{{EBE}} €</td><td class="num">{{LIQ}} %</td><td class="num">{{DETTE}} %</td></tr>
+    </table>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <strong>Lecture :</strong>
+      <ul><!-- 3-4 puces d'analyse : tendance CA, rentabilité, structure, exercices confidentiels --></ul>
+    </div>
+  </section>
+
+  <!-- Section facultative : supprimer si l'entreprise n'appartient pas à un groupe -->
+  <section>
+    <h2>Groupe d'appartenance — {{NOM_HOLDING}}</h2>
+    <p style="color:var(--ink-2);margin-top:0">{{CONTEXTE_GROUPE}}</p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Société</th><th>SIREN</th><th>Activité</th><th>Rôle / finances connues</th></tr></thead>
+      <!-- RÉPÉTER : une ligne par entité liée -->
+      <tr><td><strong>{{ENTITE}}</strong></td><td>{{SIREN_ENTITE}}</td><td>{{ACTIVITE_ENTITE}}</td><td>{{DETAIL_ENTITE}}</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Historique juridique (BODACC)</h2>
+    <div class="card">
+      <ul style="margin-top:0">
+        <!-- Toujours statuer explicitement sur les procédures collectives
+             (« aucune procédure collective » ou détail daté de chaque procédure) -->
+        <li>{{SYNTHESE_BODACC}}</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Synthèse</h2>
+    <div class="cols">
+      <div class="card">
+        <strong style="color:var(--good-text)">Points forts</strong>
+        <ul><!-- RÉPÉTER --><li>{{POINT_FORT}}</li></ul>
+      </div>
+      <div class="card">
+        <strong style="color:var(--critical)">Points de vigilance</strong>
+        <ul><!-- RÉPÉTER ; inclure les homonymes à ne pas confondre --><li>{{POINT_VIGILANCE}}</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sources</h2>
+    <ul style="margin-top:0">
+      <!-- RÉPÉTER : un lien par source réellement utilisée -->
+      <li><a href="{{URL}}">{{LIBELLE_SOURCE}}</a></li>
+    </ul>
+  </section>
+</div>

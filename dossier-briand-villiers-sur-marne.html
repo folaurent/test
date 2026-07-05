@@ -1,0 +1,247 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dossier — BRIAND SAS (Villiers-sur-Marne)</title>
+<style>
+  :root {
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10); --series: #2a78d6; --series-soft: #cde2fb;
+    --good: #0ca30c; --good-text: #006300; --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
+      --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
+      --border: rgba(255,255,255,0.10); --series: #3987e5; --series-soft: #184f95;
+      --good-text: #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
+    --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
+    --border: rgba(255,255,255,0.10); --series: #3987e5; --series-soft: #184f95;
+    --good-text: #0ca30c;
+  }
+  :root[data-theme="light"] {
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10); --series: #2a78d6; --series-soft: #cde2fb;
+    --good-text: #006300;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 64px; }
+  header .kicker { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+  h1 { font-size: 28px; margin: 6px 0 2px; }
+  .sub { color: var(--ink-2); margin: 0 0 10px; }
+  .badge {
+    display: inline-block; font-size: 13px; font-weight: 600; padding: 2px 10px;
+    border-radius: 999px; border: 1px solid var(--border);
+    color: var(--good-text); background: color-mix(in srgb, var(--good) 12%, transparent);
+  }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  section { margin-top: 36px; }
+  h2 { font-size: 19px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--grid); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .tile .label { color: var(--ink-2); font-size: 13px; }
+  .tile .value { font-size: 26px; font-weight: 700; margin-top: 2px; }
+  .tile .note { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .tablewrap { overflow-x: auto; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  thead th { color: var(--ink-2); font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--grid) 35%, var(--surface)); }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul { margin: 8px 0 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  a { color: var(--series); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } }
+  /* Bar chart — série unique (CA), teinte séquentielle bleue */
+  .chart { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 18px 10px; }
+  .chart .title { font-size: 14px; font-weight: 600; }
+  .chart .subtitle { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; }
+  .bars { display: flex; align-items: flex-end; gap: 14px; height: 160px; border-bottom: 1px solid var(--baseline); }
+  .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; position: relative; }
+  .bar .fill { width: 60%; max-width: 44px; background: var(--series); border-radius: 4px 4px 0 0; }
+  .bar:hover .fill { filter: brightness(1.12); }
+  .bar .val { font-size: 11.5px; color: var(--ink-2); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+  .bar .nd { font-size: 11.5px; color: var(--muted); position: absolute; bottom: 6px; }
+  .xlab { display: flex; gap: 14px; margin-top: 6px; }
+  .xlab span { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
+  .foot { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">Dossier entreprise · scan du 5 juillet 2026</div>
+    <h1>BRIAND SAS</h1>
+    <p class="sub">Entreprise générale de bâtiment — 351 impasse des Armoiries, 94350 Villiers-sur-Marne</p>
+    <span class="badge">✓ En activité — aucune procédure collective</span>
+    <div class="meta">SIREN 334 982 451 · SIRET siège 334 982 451 00059 · RCS Créteil · SAS au capital de 100 000 €</div>
+  </header>
+
+  <section>
+    <h2>Chiffres clés</h2>
+    <div class="tiles">
+      <div class="tile"><div class="label">Chiffre d'affaires 2022</div><div class="value">25,7 M€</div><div class="note">dernier exercice public</div></div>
+      <div class="tile"><div class="label">Résultat net 2022</div><div class="value">2,34 M€</div><div class="note">marge nette ≈ 9 %</div></div>
+      <div class="tile"><div class="label">Effectif</div><div class="value">≈ 47</div><div class="note">tranche INSEE 20-49 (2023)</div></div>
+      <div class="tile"><div class="label">Ancienneté</div><div class="value">40 ans</div><div class="note">créée le 4 mars 1986</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Fiche d'identité</h2>
+    <div class="tablewrap">
+    <table>
+      <tr><td>Dénomination</td><td><strong>BRIAND</strong> (nom commercial : BRIAND SAS)</td></tr>
+      <tr><td>SIREN / SIRET siège</td><td>334 982 451 / 334 982 451 00059</td></tr>
+      <tr><td>Forme juridique</td><td>Société par actions simplifiée (SAS), capital 100 000 €</td></tr>
+      <tr><td>Création</td><td>4 mars 1986 — RCS Créteil</td></tr>
+      <tr><td>Siège</td><td>351 impasse des Armoiries, 94350 Villiers-sur-Marne</td></tr>
+      <tr><td>Activité (NAF)</td><td>43.99C — Travaux de maçonnerie générale et gros œuvre de bâtiment</td></tr>
+      <tr><td>Effectif</td><td>Tranche 20-49 salariés (INSEE 2023) ; ~47 selon annuaires</td></tr>
+      <tr><td>Catégorie</td><td>PME · 4 établissements au total, 1 ouvert</td></tr>
+      <tr><td>Certifications</td><td>QUALIBAT RGE — qualifications n° 2112D111, 2112D112, 2112D115, 2121D112, 6311D111</td></tr>
+      <tr><td>Conventions collectives</td><td>IDCC 1597 (ouvriers bâtiment &gt; 10), 2609 (ETAM bâtiment), 2420 (cadres bâtiment)</td></tr>
+      <tr><td>Site web</td><td><a href="https://briand-sas.fr/">briand-sas.fr</a></td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Activité</h2>
+    <div class="card">
+      Entreprise générale de bâtiment intervenant principalement en Île-de-France, sur quatre métiers :
+      <ul>
+        <li><strong>Gros œuvre</strong> et <strong>maçonnerie</strong> (cœur d'activité, NAF 43.99C)</li>
+        <li><strong>Carrelage</strong></li>
+        <li><strong>Menuiserie</strong> — portée par la société sœur BRIAND MENUISERIE</li>
+      </ul>
+      Les qualifications QUALIBAT RGE indiquent un positionnement également sur la rénovation énergétique.
+    </div>
+  </section>
+
+  <section>
+    <h2>Gouvernance</h2>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Rôle</th><th>Titulaire</th></tr></thead>
+      <tr><td>Président</td><td>GROUPE BOERI (personne morale — holding familiale)</td></tr>
+      <tr><td>Directeur général</td><td>Jean-Claude BOERI (né en 1956)</td></tr>
+      <tr><td>Commissaire aux comptes titulaire</td><td>FICOGEX SA</td></tr>
+      <tr><td>Commissaire aux comptes suppléant</td><td>Xavier FLAMENT</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Finances</h2>
+    <div class="chart">
+      <div class="title">Chiffre d'affaires — exercices publiés (INPI)</div>
+      <div class="subtitle">En millions d'euros · 2021 non publié (dépôt confidentiel)</div>
+      <div class="bars">
+        <div class="bar" title="2016 : 12 262 102 €"><span class="val">12,3</span><div class="fill" style="height:48%"></div></div>
+        <div class="bar" title="2017 : 10 184 438 €"><div class="fill" style="height:40%"></div></div>
+        <div class="bar" title="2018 : 13 028 212 €"><div class="fill" style="height:51%"></div></div>
+        <div class="bar" title="2019 : 14 578 664 €"><div class="fill" style="height:57%"></div></div>
+        <div class="bar" title="2020 : 15 234 723 €"><div class="fill" style="height:59%"></div></div>
+        <div class="bar" title="2021 : non publié"><span class="nd">n.d.</span></div>
+        <div class="bar" title="2022 : 25 729 154 €"><span class="val">25,7</span><div class="fill" style="height:100%"></div></div>
+      </div>
+      <div class="xlab"><span>2016</span><span>2017</span><span>2018</span><span>2019</span><span>2020</span><span>2021</span><span>2022</span></div>
+      <div class="foot">Source : ratios INPI-BCE (data.economie.gouv.fr). Détail complet dans le tableau ci-dessous.</div>
+    </div>
+    <br>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Exercice clos</th><th class="num">Chiffre d'affaires</th><th class="num">Résultat net</th><th class="num">EBE</th><th class="num">Liquidité générale</th><th class="num">Taux d'endettement</th></tr></thead>
+      <tr><td>31/12/2016</td><td class="num">12 262 102 €</td><td class="num">543 539 €</td><td class="num">838 923 €</td><td class="num">134,6 %</td><td class="num">16,6 %</td></tr>
+      <tr><td>31/12/2017</td><td class="num">10 184 438 €</td><td class="num">528 464 €</td><td class="num">856 846 €</td><td class="num">147,4 %</td><td class="num">11,7 %</td></tr>
+      <tr><td>31/12/2018</td><td class="num">13 028 212 €</td><td class="num">492 479 €</td><td class="num">734 028 €</td><td class="num">140,0 %</td><td class="num">20,7 %</td></tr>
+      <tr><td>31/12/2019</td><td class="num">14 578 664 €</td><td class="num">870 596 €</td><td class="num">1 157 185 €</td><td class="num">147,4 %</td><td class="num">7,6 %</td></tr>
+      <tr><td>31/12/2020</td><td class="num">15 234 723 €</td><td class="num">954 368 €</td><td class="num">1 519 941 €</td><td class="num">152,7 %</td><td class="num">29,0 %</td></tr>
+      <tr><td>31/12/2022</td><td class="num">25 729 154 €</td><td class="num">2 344 842 €</td><td class="num">2 893 253 €</td><td class="num">164,2 %</td><td class="num">0,2 %</td></tr>
+    </table>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <strong>Lecture :</strong>
+      <ul>
+        <li>CA plus que doublé entre 2017 (10,2 M€) et 2022 (25,7 M€) — croissance forte et régulière.</li>
+        <li>Rentabilité en nette amélioration : marge nette ≈ 9 % en 2022 contre 4-5 % historiquement.</li>
+        <li>Structure très saine au dernier bilan public : endettement quasi nul (0,2 %), liquidité confortable (164 %).</li>
+        <li>Exercices 2021 et 2023-2025 déposés en confidentiel ; dernier dépôt de comptes au BODACC le 7 juin 2026 — l'entreprise est à jour de ses obligations.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Groupe d'appartenance — GROUPE BOERI</h2>
+    <p style="color:var(--ink-2);margin-top:0">Toutes les entités sont domiciliées au 351 impasse des Armoiries à Villiers-sur-Marne. Direction opérationnelle : Jean-Claude Boeri ; présidence de la holding : Fabien Boeri — configuration typique d'une transmission familiale en cours.</p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Société</th><th>SIREN</th><th>Activité</th><th>Rôle / finances connues</th></tr></thead>
+      <tr><td><strong>GROUPE BOERI</strong></td><td>529 170 680</td><td>Holding (64.20Z), créée 2011</td><td>Président : Fabien Boeri ; DG : Jean-Claude Boeri. Résultat net 2022 : 2,39 M€</td></tr>
+      <tr><td><strong>BRIAND SAS</strong></td><td>334 982 451</td><td>Gros œuvre (43.99C)</td><td>Filiale principale — CA 2022 : 25,7 M€</td></tr>
+      <tr><td><strong>BRIAND MENUISERIE</strong></td><td>532 353 794</td><td>Menuiserie (43.32A), créée 2011</td><td>10-19 salariés. CA ~2,8-3,3 M€ (2016-2021), comptes confidentiels depuis ; résultat net 2024 : 715 855 €. Présidée par MIRES INVESTISSEMENTS</td></tr>
+      <tr><td><strong>CENI</strong></td><td>479 062 978</td><td>Travaux spécialisés (43.99C), créée 2004</td><td>Présidée par GROUPE BOERI. CA 2023 : 725 k€</td></tr>
+      <tr><td><strong>SCI EBAL</strong></td><td>989 888 060</td><td>Immobilier (68.20B), créée 2025</td><td>Gérant : Fabien Boeri ; associés : GROUPE BOERI et MIRES INVESTISSEMENTS</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Historique juridique (BODACC)</h2>
+    <div class="card">
+      <ul style="margin-top:0">
+        <li>21 annonces publiées depuis 2008 — <strong>aucune procédure collective</strong> (ni sauvegarde, ni redressement, ni liquidation).</li>
+        <li>Dépôts de comptes réguliers chaque année ; dernier dépôt le 7 juin 2026.</li>
+        <li>Modifications diverses en 2009, 2012 (transfert du siège au 351 impasse des Armoiries) et 2015 (gouvernance/statuts).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Synthèse</h2>
+    <div class="cols">
+      <div class="card">
+        <strong style="color:var(--good-text)">Points forts</strong>
+        <ul>
+          <li>40 ans d'ancienneté, actionnariat familial stable, aucune procédure collective.</li>
+          <li>Croissance soutenue : +150 % de CA entre 2017 et 2022, rentabilité en hausse.</li>
+          <li>Endettement quasi nul et trésorerie confortable au dernier bilan public.</li>
+          <li>Qualifications QUALIBAT RGE actives, conventions collectives du bâtiment appliquées.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <strong style="color:var(--critical)">Points de vigilance</strong>
+        <ul>
+          <li>Comptes 2021 et 2023-2025 non accessibles publiquement : chiffres récents non vérifiables en source ouverte.</li>
+          <li>Forte dépendance présumée au marché du BTP francilien.</li>
+          <li>Homonymes sans lien : <em>Groupe Briand</em> (constructeur métallique vendéen) et <em>Briand Rampanana</em> (entrepreneur individuel, Villiers-sur-Marne, SIREN 440 718 690).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sources</h2>
+    <ul style="margin-top:0">
+      <li><a href="https://annuaire-entreprises.data.gouv.fr/entreprise/334982451">Annuaire des entreprises (INSEE/RNE) — BRIAND SAS</a></li>
+      <li><a href="https://data.economie.gouv.fr/explore/dataset/ratios_inpi_bce/">Ratios financiers INPI-BCE — data.economie.gouv.fr</a></li>
+      <li><a href="https://www.bodacc.fr/">BODACC — annonces commerciales, SIREN 334 982 451</a></li>
+      <li><a href="https://briand-sas.fr/">Site officiel BRIAND</a></li>
+      <li><a href="https://www.pappers.fr/entreprise/briand-sas-334982451">Pappers — BRIAND SAS</a></li>
+      <li><a href="https://www.societe.com/societe/briand-sas-334982451.html">Societe.com — BRIAND SAS</a></li>
+    </ul>
+  </section>
+</div>
