@@ -1,198 +1,369 @@
 <!--
-  Template du rapport "dossier entreprise".
-  Remplacer tous les jetons {{...}} ; dupliquer les blocs marqués "RÉPÉTER".
-  Le fichier doit rester autonome (aucune ressource externe) et gérer clair/sombre.
-  Exemple complet rempli : dossier-briand-villiers-sur-marne.html (commit initial de ce skill).
+  Template "radiographie 360°" — design Jonction (identique à reference-design-bornet.html).
+  Remplacer les jetons {{...}} ; dupliquer les blocs marqués RÉPÉTER ; supprimer une
+  section UNIQUEMENT si la donnée est introuvable (et le dire dans le footer).
+  Fichier autonome : aucune ressource externe.
 -->
+<!doctype html>
+<html lang="fr">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dossier — {{DENOMINATION}} ({{VILLE}})</title>
+<title>{{NOM_COURT}} — Radiographie 360°</title>
 <style>
-  :root {
-    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e;
-    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
-    --border: rgba(11,11,11,0.10); --series: #2a78d6;
-    --good: #0ca30c; --good-text: #006300; --critical: #d03b3b;
+  :root{
+    --bg:#0a0e14; --bg2:#080b11;  --panel:#111823; --panel2:#0d141d;
+    --line:#1e2a3a; --txt:#e7eef7; --muted:#8ea3bd; --dim:#5f7391;
+    --cold:#38bdf8; --cold2:#0ea5e9; --ok:#34d399; --warn:#fbbf24; --dang:#fb5b5b;
+    --accent:#f59e0b;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
-      --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
-      --border: rgba(255,255,255,0.10); --series: #3987e5; --good-text: #0ca30c;
-    }
-  }
-  :root[data-theme="dark"] {
-    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
-    --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
-    --border: rgba(255,255,255,0.10); --series: #3987e5; --good-text: #0ca30c;
-  }
-  :root[data-theme="light"] {
-    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e;
-    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
-    --border: rgba(11,11,11,0.10); --series: #2a78d6; --good-text: #006300;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--page); color: var(--ink);
-         font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 64px; }
-  header .kicker { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
-  h1 { font-size: 28px; margin: 6px 0 2px; }
-  .sub { color: var(--ink-2); margin: 0 0 10px; }
-  .badge { display: inline-block; font-size: 13px; font-weight: 600; padding: 2px 10px;
-           border-radius: 999px; border: 1px solid var(--border);
-           color: var(--good-text); background: color-mix(in srgb, var(--good) 12%, transparent); }
-  .badge.bad { color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); }
-  .meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
-  section { margin-top: 36px; }
-  h2 { font-size: 19px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--grid); }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
-  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
-  .tile .label { color: var(--ink-2); font-size: 13px; }
-  .tile .value { font-size: 26px; font-weight: 700; margin-top: 2px; }
-  .tile .note { color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
-  .tablewrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
-  thead th { color: var(--ink-2); font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--grid) 35%, var(--surface)); }
-  tr:last-child td { border-bottom: none; }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  ul { margin: 8px 0 0; padding-left: 20px; }
-  li { margin: 4px 0; }
-  a { color: var(--series); }
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } }
-  .chart { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 18px 10px; }
-  .chart .title { font-size: 14px; font-weight: 600; }
-  .chart .subtitle { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; }
-  .bars { display: flex; align-items: flex-end; gap: 14px; height: 160px; border-bottom: 1px solid var(--baseline); }
-  .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; position: relative; }
-  .bar .fill { width: 60%; max-width: 44px; background: var(--series); border-radius: 4px 4px 0 0; }
-  .bar:hover .fill { filter: brightness(1.12); }
-  .bar .val { font-size: 11.5px; color: var(--ink-2); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
-  .bar .nd { font-size: 11.5px; color: var(--muted); position: absolute; bottom: 6px; }
-  .xlab { display: flex; gap: 14px; margin-top: 6px; }
-  .xlab span { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
-  .foot { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#0f2233 0%,#0a0e14 55%);
+    color:var(--txt);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--cold)}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+  nav{position:sticky;top:0;z-index:50;background:rgba(10,14,20,.82);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;gap:6px;align-items:center;height:56px;overflow-x:auto;scrollbar-width:none}
+  nav .wrap::-webkit-scrollbar{display:none}
+  nav .brand{font-weight:800;letter-spacing:.4px;margin-right:14px;white-space:nowrap}
+  nav .brand span{color:var(--cold)}
+  nav a{color:var(--muted);text-decoration:none;font-size:13.5px;font-weight:600;padding:7px 11px;border-radius:8px;white-space:nowrap}
+  nav a:hover{color:var(--txt);background:#16202e}
+  header.hero{padding:64px 0 40px;border-bottom:1px solid var(--line)}
+  .kicker{color:var(--cold);font-weight:700;letter-spacing:2px;font-size:12.5px;text-transform:uppercase}
+  h1{font-size:clamp(34px,5vw,58px);line-height:1.02;margin:12px 0 8px;letter-spacing:-1px}
+  h1 b{color:var(--cold)}
+  .sub{color:var(--muted);font-size:18px;max-width:760px}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .tag{font-size:12.5px;color:var(--muted);border:1px solid var(--line);background:#0e1621;
+    padding:5px 11px;border-radius:999px}
+  .tag b{color:var(--txt)}
+  section{padding:52px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--cold);margin:0 0 4px}
+  h2+.h2sub{font-size:26px;font-weight:800;margin:0 0 26px;letter-spacing:-.5px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+  .kpi{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:18px}
+  .kpi .n{font-size:30px;font-weight:800;letter-spacing:-1px}
+  .kpi .l{color:var(--muted);font-size:13px;margin-top:2px}
+  .kpi .d{color:var(--dim);font-size:11.5px;margin-top:6px}
+  .cold{color:var(--cold)} .ok{color:var(--ok)} .warn{color:var(--warn)} .dang{color:var(--dang)}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:20px}
+  .card h3{margin:0 0 10px;font-size:16px}
+  .card p{margin:6px 0;color:var(--muted);font-size:14.5px}
+  .card ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+  .card li{margin:5px 0}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .row:last-of-type{border-bottom:0}
+  .row .k{color:var(--muted)} .row .v{font-weight:700;white-space:nowrap}
+  .bomb{background:linear-gradient(135deg,#2a0f12,#1a0c10);border:1px solid #6b2230;border-radius:16px;
+    padding:22px 24px;display:flex;gap:18px;align-items:flex-start}
+  .bomb .ic{font-size:30px;line-height:1}
+  .bomb h3{margin:0 0 6px;color:#ff8a8a;font-size:19px}
+  .bomb p{margin:5px 0;color:#e6c3c7;font-size:14.5px}
+  .bomb .proof{margin-top:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+    color:#ffb4b4;background:#160a0d;border:1px solid #3a1a20;border-radius:8px;padding:8px 11px;overflow-x:auto}
+  .bomb.amber{background:linear-gradient(135deg,#2a1e0a,#1a140a);border-color:#6b5222}
+  .bomb.amber h3{color:#ffd68a} .bomb.amber p{color:#e7d3a8}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+  tbody tr:hover{background:#0f1927}
+  td b{color:var(--txt)}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  .badge{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.5px;padding:3px 9px;border-radius:6px}
+  .badge.b-red{background:#160a0d;border:1px solid #3a1a20;color:#ff9a9a}
+  .badge.b-green{background:#0c1f16;border:1px solid #1c4030;color:#7fe0b2}
+  .org{display:grid;gap:14px}
+  .orgrow{display:grid;gap:12px}
+  .r3{grid-template-columns:repeat(3,1fr)} .r4{grid-template-columns:repeat(4,1fr)}
+  .person{background:#0e1621;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .person.boss{border-color:var(--cold2);background:linear-gradient(160deg,#0e2233,#0c1622);box-shadow:0 0 0 1px #0e3350 inset}
+  .person .nm{font-weight:700;font-size:14.5px}
+  .person .ro{color:var(--muted);font-size:12.5px}
+  .person .an{color:var(--dim);font-size:11px;margin-top:3px}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.4px;padding:2px 7px;border-radius:999px;margin-bottom:5px}
+  .pill.dir{background:#0e3350;color:var(--cold)} .pill.com{background:#153021;color:var(--ok)}
+  .pill.adv{background:#31240c;color:var(--warn)} .pill.tec{background:#231633;color:#c4a2ff}
+  .axe{display:grid;grid-template-columns:44px 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .axe:last-child{border-bottom:0}
+  .axe .num{font-size:24px;font-weight:800;color:var(--cold);opacity:.6}
+  .axe h3{margin:0 0 4px;font-size:16.5px}
+  .axe p{margin:0;color:var(--muted);font-size:14px}
+  .axe .why{color:var(--dim);font-size:12.5px;margin-top:6px}
+  .pitch{background:linear-gradient(135deg,#082033,#0a1420);border:1px solid var(--cold2);border-radius:18px;padding:30px 32px}
+  .pitch .q{font-size:21px;line-height:1.5;font-weight:600}
+  .pitch .q b{color:var(--cold)}
+  footer{padding:34px 0 60px;color:var(--dim);font-size:12.5px}
+  .src{color:var(--dim);font-size:11.5px;margin-top:10px}
+  .flag{display:inline-block;background:#160a0d;border:1px solid #3a1a20;color:#ff9a9a;font-size:11px;
+    padding:2px 8px;border-radius:6px;font-weight:700}
+  @media(max-width:820px){.g2,.g3,.r3,.r4{grid-template-columns:1fr}.axe{grid-template-columns:1fr}}
+  @media print{nav{display:none}body{background:#fff;color:#111}.card,.kpi{break-inside:avoid}}
 </style>
+</head>
+<body>
 
-<div class="wrap">
-  <header>
-    <div class="kicker">Dossier entreprise · scan du {{DATE_SCAN}}</div>
-    <h1>{{DENOMINATION}}</h1>
-    <p class="sub">{{DESCRIPTION_COURTE}} — {{ADRESSE_SIEGE}}</p>
-    <!-- badge : classe "badge" si sain, "badge bad" si cessée / procédure collective -->
-    <span class="badge">{{ETAT}}</span>
-    <div class="meta">SIREN {{SIREN}} · SIRET siège {{SIRET}} · RCS {{GREFFE}} · {{FORME_JURIDIQUE}} au capital de {{CAPITAL}}</div>
-  </header>
+<nav><div class="wrap">
+  <div class="brand">{{MARQUE_NAV_1}} <span>{{MARQUE_NAV_2}}</span> · 360°</div>
+  <a href="#synth">Synthèse</a>
+  <a href="#legal">Société &amp; statuts</a>
+  <a href="#org">Organigramme</a>
+  <a href="#conc">Concurrents</a>
+  <a href="#marche">Marché</a>
+  <a href="#refs">Références</a>
+  <a href="#marches">Marchés publics</a>
+  <a href="#seo">Écart SEO</a>
+  <a href="#digital">Audit digital</a>
+  <a href="#axes">Automatisation</a>
+  <a href="#renforts">Renforts Jonction</a>
+</div></nav>
 
-  <section>
-    <h2>Chiffres clés</h2>
-    <div class="tiles">
-      <!-- RÉPÉTER : 3 à 4 tuiles (CA, résultat net, effectif, ancienneté) -->
-      <div class="tile"><div class="label">{{KPI_LABEL}}</div><div class="value">{{KPI_VALEUR}}</div><div class="note">{{KPI_NOTE}}</div></div>
-    </div>
-  </section>
+<header class="hero"><div class="wrap">
+  <div class="kicker">Dossier de rendez-vous — préparé par Jonction · {{DATE_SCAN}}</div>
+  <h1>{{NOM_AFFICHE}},<br><b>passé au scanner.</b></h1>
+  <p class="sub">Tout ce qu'on a pu reconstituer sur votre maison — société, équipe, concurrents, marché et présence digitale — à partir de sources 100 % ouvertes, en quelques heures. Voilà ce qu'une machine bien pilotée voit de vous.</p>
+  <div class="tags">
+    <!-- RÉPÉTER : 4-6 tags identitaires (raison sociale, SIREN, ville, ancienneté/génération, réseau, IDCC) -->
+    <span class="tag">{{TAG}}</span>
+  </div>
+</div></header>
 
-  <section>
-    <h2>Fiche d'identité</h2>
-    <div class="tablewrap">
-    <table>
-      <!-- RÉPÉTER : une ligne par champ (dénomination, SIREN, forme, création, siège,
-           NAF, effectif, catégorie, certifications, conventions collectives, site web) -->
-      <tr><td>{{CHAMP}}</td><td>{{VALEUR}}</td></tr>
-    </table>
-    </div>
-  </section>
-
-  <section>
-    <h2>Activité</h2>
-    <div class="card">{{ACTIVITE_DESCRIPTION_ET_LISTE_METIERS}}</div>
-  </section>
-
-  <section>
-    <h2>Gouvernance</h2>
-    <div class="tablewrap">
-    <table>
-      <thead><tr><th>Rôle</th><th>Titulaire</th></tr></thead>
-      <!-- RÉPÉTER : une ligne par dirigeant / CAC -->
-      <tr><td>{{ROLE}}</td><td>{{TITULAIRE}}</td></tr>
-    </table>
-    </div>
-  </section>
-
-  <section>
-    <h2>Finances</h2>
-    <div class="chart">
-      <div class="title">Chiffre d'affaires — exercices publiés (INPI)</div>
-      <div class="subtitle">En millions d'euros · exercices manquants = dépôt confidentiel</div>
-      <div class="bars">
-        <!-- RÉPÉTER : une div.bar par exercice, height en % du max.
-             Direct labels sur premier et dernier exercice seulement (.val) ;
-             exercice non publié : pas de .fill, mettre <span class="nd">n.d.</span>.
-             title="AAAA : X XXX XXX €" sur chaque .bar pour le survol. -->
-        <div class="bar" title="{{ANNEE}} : {{CA_EXACT}} €"><div class="fill" style="height:{{PCT}}%"></div></div>
-      </div>
-      <div class="xlab"><!-- RÉPÉTER : <span>{{ANNEE}}</span> --></div>
-      <div class="foot">Source : ratios INPI-BCE (data.economie.gouv.fr). Détail complet dans le tableau ci-dessous.</div>
-    </div>
-    <br>
-    <div class="tablewrap">
-    <table>
-      <thead><tr><th>Exercice clos</th><th class="num">Chiffre d'affaires</th><th class="num">Résultat net</th><th class="num">EBE</th><th class="num">Liquidité générale</th><th class="num">Taux d'endettement</th></tr></thead>
-      <!-- RÉPÉTER : une ligne par exercice publié -->
-      <tr><td>{{DATE_CLOTURE}}</td><td class="num">{{CA}} €</td><td class="num">{{RN}} €</td><td class="num">{{EBE}} €</td><td class="num">{{LIQ}} %</td><td class="num">{{DETTE}} %</td></tr>
-    </table>
-    </div>
-    <div class="card" style="margin-top:12px">
-      <strong>Lecture :</strong>
-      <ul><!-- 3-4 puces d'analyse : tendance CA, rentabilité, structure, exercices confidentiels --></ul>
-    </div>
-  </section>
-
-  <!-- Section facultative : supprimer si l'entreprise n'appartient pas à un groupe -->
-  <section>
-    <h2>Groupe d'appartenance — {{NOM_HOLDING}}</h2>
-    <p style="color:var(--ink-2);margin-top:0">{{CONTEXTE_GROUPE}}</p>
-    <div class="tablewrap">
-    <table>
-      <thead><tr><th>Société</th><th>SIREN</th><th>Activité</th><th>Rôle / finances connues</th></tr></thead>
-      <!-- RÉPÉTER : une ligne par entité liée -->
-      <tr><td><strong>{{ENTITE}}</strong></td><td>{{SIREN_ENTITE}}</td><td>{{ACTIVITE_ENTITE}}</td><td>{{DETAIL_ENTITE}}</td></tr>
-    </table>
-    </div>
-  </section>
-
-  <section>
-    <h2>Historique juridique (BODACC)</h2>
+<!-- SYNTHESE -->
+<section id="synth"><div class="wrap">
+  <h2>Synthèse express</h2>
+  <div class="h2sub">Les chiffres qui vous identifient — vérifiés au registre</div>
+  <div class="kpis">
+    <!-- RÉPÉTER : 6 KPIs. Classes de couleur : cold (identité), ok (positif), warn (moyen), dang (alerte) -->
+    <div class="kpi"><div class="n cold">{{KPI_N}}</div><div class="l">{{KPI_L}}</div><div class="d">{{KPI_D}}</div></div>
+  </div>
+  <div style="margin-top:22px" class="grid g2">
     <div class="card">
-      <ul style="margin-top:0">
-        <!-- Toujours statuer explicitement sur les procédures collectives
-             (« aucune procédure collective » ou détail daté de chaque procédure) -->
-        <li>{{SYNTHESE_BODACC}}</li>
+      <h3>✅ {{TITRE_POSITIF}}</h3>
+      <ul><!-- RÉPÉTER : 4 puces vérifiées (RCS actif, aucune procédure, comptes à jour, embauches, fidélité équipe…) --><li>{{PUCE}}</li></ul>
+    </div>
+    <div class="card">
+      <h3>🎯 {{TITRE_SIGNAL_STRATEGIQUE}}</h3>
+      <ul><!-- RÉPÉTER : 4 puces sur le signal récent (holding créée, modif BODACC datée, SCI, transmission…) --><li>{{PUCE}}</li></ul>
+    </div>
+  </div>
+</div></section>
+
+<!-- LEGAL -->
+<section id="legal"><div class="wrap">
+  <h2>Société &amp; statuts</h2>
+  <div class="h2sub">{{SOUS_TITRE_GOUVERNANCE}}</div>
+  <div class="grid g3">
+    <!-- RÉPÉTER : 1 carte par dirigeant clé ; le décideur : style="border-color:var(--cold2)" + <span class="pill dir">DÉCIDEUR</span> -->
+    <div class="card">
+      <h3>{{DIRIGEANT_NOM}}</h3>
+      <p>{{DIRIGEANT_ROLE}} · {{NAISSANCE}}</p>
+      <p class="src">{{DIRIGEANT_NOTE}}</p>
+    </div>
+  </div>
+  <div style="margin-top:16px" class="grid g2">
+    <div class="card">
+      <h3>Identité légale</h3>
+      <ul>
+        <li>Raison sociale : <b>{{RAISON_SOCIALE}}</b></li>
+        <li>Forme : {{FORME}} · NAF <b>{{NAF}}</b> ({{NAF_LIBELLE}}) · créée {{ANNEE_CREATION}}</li>
+        <li>Siège : {{ADRESSE}} {{ETABLISSEMENTS_SECONDAIRES}}</li>
+        <li>Convention collective — <b>IDCC {{IDCC}}</b> · capital {{CAPITAL}}</li>
       </ul>
     </div>
-  </section>
+    <div class="card">
+      <h3>Historique récent au registre (BODACC)</h3>
+      <ul><!-- RÉPÉTER : 4 puces datées, la plus récente d'abord --><li><b>{{DATE}}</b> — {{EVENEMENT}}</li></ul>
+    </div>
+  </div>
+  <p class="src">Sources : {{SOURCES_LEGAL}}</p>
+</div></section>
 
-  <section>
-    <h2>Synthèse</h2>
-    <div class="cols">
-      <div class="card">
-        <strong style="color:var(--good-text)">Points forts</strong>
-        <ul><!-- RÉPÉTER --><li>{{POINT_FORT}}</li></ul>
-      </div>
-      <div class="card">
-        <strong style="color:var(--critical)">Points de vigilance</strong>
-        <ul><!-- RÉPÉTER ; inclure les homonymes à ne pas confondre --><li>{{POINT_VIGILANCE}}</li></ul>
+<!-- ORG -->
+<section id="org"><div class="wrap">
+  <h2>Organigramme reconstitué</h2>
+  <div class="h2sub">{{NB_PROFILS}} salariés retrouvés nominativement sur LinkedIn — sans mettre un pied chez vous</div>
+  <div class="org">
+    <!-- RÉPÉTER les rangées par pôle. Pills : dir (direction/technique), com (commerce), adv (études/ADV), tec (terrain).
+         Direction : class="person boss". Tensions : <div class="an">⚠ poste en tension — 1 CDI ouvert</div> -->
+    <div class="orgrow r3">
+      <div class="person boss"><span class="pill dir">DIRECTION</span><div class="nm">{{NOM}}</div><div class="ro">{{POSTE}}</div><div class="an">{{ANCIENNETE}}</div></div>
+    </div>
+    <div class="orgrow r4">
+      <div class="person"><span class="pill com">COMMERCE</span><div class="nm">{{NOM}}</div><div class="ro">{{POSTE}}</div></div>
+    </div>
+  </div>
+  <p class="src">Page entreprise : <b>{{ABONNES}} abonnés</b> · effectif déclaré {{EFFECTIF_LINKEDIN}} · dernier post {{DERNIER_POST}}. Coût du scan complet de l'équipe : <b>≈ {{COUT_SCAN}}</b>. Source : LinkedIn + {{AUTRES_SOURCES}}.</p>
+</div></section>
+
+<!-- CONCURRENTS -->
+<section id="conc"><div class="wrap">
+  <h2>Paysage concurrentiel — {{ZONE}}</h2>
+  <div class="h2sub">{{PUNCHLINE_CONCURRENCE}}</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Acteur</th><th>Taille</th><th>Positionnement</th><th>Force digitale</th></tr></thead>
+      <tbody>
+        <!-- RÉPÉTER : 5-6 lignes. Mettre en <b> les chiffres clés ; la ligne "benchmark digital" doit le dire -->
+        <tr><td><b>{{CONCURRENT}}</b><br><span class="src">{{VILLE_CONC}}</span></td><td>{{TAILLE}}</td><td>{{POSITIONNEMENT}}</td><td>{{FORCE_DIGITALE}}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Sources : {{SOURCES_CONC}}</p>
+</div></section>
+
+<!-- MARCHE -->
+<section id="marche"><div class="wrap">
+  <h2>Marché &amp; réglementation</h2>
+  <div class="h2sub">{{PUNCHLINE_MARCHE}}</div>
+  <div class="kpis">
+    <!-- RÉPÉTER : 4 KPIs marché (taille branche, marché clients, part récurrent, tension recrutement) -->
+    <div class="kpi"><div class="n cold">{{N}}</div><div class="l">{{L}}</div><div class="d">{{D}}</div></div>
+  </div>
+  <div style="margin-top:18px" class="grid g3">
+    <!-- RÉPÉTER : 3 cartes réglementation, chacune finit par <p class="why">→ angle commercial</p> -->
+    <div class="card">
+      <h3>{{EMOJI}} {{REGLEMENTATION}}</h3>
+      <p>{{OBLIGATION_ET_ECHEANCE}}</p>
+      <p class="why">→ {{ANGLE_COMMERCIAL}}</p>
+    </div>
+  </div>
+  <p class="src">Sources : {{SOURCES_MARCHE}}</p>
+</div></section>
+
+<!-- REFERENCES -->
+<section id="refs"><div class="wrap">
+  <h2>Vos références</h2>
+  <div class="h2sub">{{PUNCHLINE_REFS}}</div>
+  <div class="grid g3">
+    <!-- RÉPÉTER : 3 cartes thématiques, chantiers en <b> avec année -->
+    <div class="card"><h3>{{EMOJI}} {{THEME_REFS}}</h3><ul><li><b>{{CHANTIER}}</b> ({{ANNEE}})</li></ul></div>
+  </div>
+  <p class="src">{{CONSTAT_REFS}} Source : {{SOURCE_REFS}}.</p>
+</div></section>
+
+<!-- MARCHES PUBLICS -->
+<section id="marches"><div class="wrap">
+  <h2>Marchés publics</h2>
+  <div class="h2sub">{{PUNCHLINE_MARCHES}}</div>
+  <div class="kpis" style="margin-bottom:18px">
+    <div class="kpi"><div class="n cold">{{NB_MARCHES}}</div><div class="l">Marchés publics notifiés</div><div class="d">Open data DECP · {{PERIODE}}</div></div>
+    <div class="kpi"><div class="n cold">{{CUMUL}}</div><div class="l">Cumul brut notifié</div><div class="d">Plafonds de bons de commande inclus, signalés</div></div>
+    <div class="kpi"><div class="n">{{DUREE_TYPE}}</div><div class="l">{{LIBELLE_DUREE}}</div><div class="d">Revenu récurrent = valeur de l'entreprise</div></div>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Acheteur public</th><th>Objet</th><th>Montant</th></tr></thead>
+      <tbody><!-- RÉPÉTER : lignes dédupliquées ; plafonds d'accords-cadres annotés "(plafond AC)" -->
+        <tr><td>{{ACHETEUR}}</td><td>{{OBJET}}</td><td><b>{{MONTANT}}</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">{{ANALYSE_MARCHES}} Source : API DECP data.economie.gouv.fr (SIREN {{SIREN}}).</p>
+</div></section>
+
+<!-- SEO GAP -->
+<section id="seo"><div class="wrap">
+  <h2>Écart SEO — le trou dans la raquette</h2>
+  <div class="h2sub">Invisible sur {{X}} requêtes commerciales testées sur {{Y}}</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Requête (intention d'achat)</th><th>Qui capte le client</th><th>{{NOM_COURT}} ?</th></tr></thead>
+      <tbody><!-- RÉPÉTER : ~6 lignes dont la ville du siège en <b> -->
+        <tr><td>{{REQUETE}}</td><td>{{QUI_CAPTE}}</td><td><span class="badge b-red">ABSENT</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:16px" class="grid g3">
+    <div class="kpi"><div class="n dang">{{PAGES_CIBLE}}</div><div class="l">Pages indexées {{DOMAINE}}</div><div class="d">{{NOTE_PAGES}}</div></div>
+    <!-- RÉPÉTER : 2 KPIs concurrents -->
+    <div class="kpi"><div class="n">{{PAGES_CONC}}</div><div class="l">Pages {{CONCURRENT_SEO}}</div></div>
+  </div>
+  <p class="src">{{ANALYSE_SEO}}</p>
+</div></section>
+
+<!-- DIGITAL -->
+<section id="digital"><div class="wrap">
+  <h2>Audit digital</h2>
+  <div class="h2sub">Là où ça fait mal — et où tout est démontrable en direct</div>
+
+  <!-- RÉPÉTER : 1 à 3 callouts "bomb" (rouge) ou "bomb amber" (orange) pour les découvertes choc,
+       chacun avec une preuve reproductible dans .proof (commande curl, citation d'avis, URL) -->
+  <div class="bomb" style="margin-bottom:16px">
+    <div class="ic">💣</div>
+    <div>
+      <h3>{{TITRE_CHOC}}</h3>
+      <p>{{EXPLICATION}}</p>
+      <div class="proof">{{PREUVE_REPRODUCTIBLE}}</div>
+    </div>
+  </div>
+
+  <div class="grid g3">
+    <div class="card"><h3>SEO fantôme</h3><ul><!-- RÉPÉTER : 4 puces (blog, H1, invisibilité, legacy) --><li>{{PUCE}}</li></ul></div>
+    <div class="card"><h3>Site figé</h3><ul><!-- RÉPÉTER : 4 puces (techno, fraîcheur, trafic, domaine) --><li>{{PUCE}}</li></ul></div>
+    <div class="card"><h3>Réputation &amp; réseaux</h3><ul><!-- RÉPÉTER : 4 puces (Google, taux réponse, LinkedIn, Indeed) --><li>{{PUCE}}</li></ul></div>
+  </div>
+  <p class="src">Vérifiable en direct : {{PREUVES_LIVE}}</p>
+</div></section>
+
+<!-- AXES -->
+<section id="axes"><div class="wrap">
+  <h2>Ce que Jonction automatise pour vous</h2>
+  <div class="h2sub">5 leviers, alignés sur vos douleurs réelles</div>
+  <!-- RÉPÉTER : 5 axes. Chaque .why cite une douleur RÉELLE trouvée dans le scan (poste ouvert, concurrent, réglementation) -->
+  <div class="axe"><div class="num">{{NN}}</div><div>
+    <h3>{{AXE_TITRE}}</h3>
+    <p>{{AXE_DESCRIPTION}}</p>
+    <p class="why">{{AXE_POURQUOI_EUX}}</p>
+  </div></div>
+
+  <div class="pitch" style="margin-top:30px">
+    <div class="q">« {{PITCH_FINAL_AVEC_CHIFFRES_MARCHE_ET_OFFRE_1500}} »</div>
+  </div>
+</div></section>
+
+<!-- RENFORTS JONCTION -->
+<section id="renforts"><div class="wrap">
+  <h2>Vos renforts Jonction — équipe dédiée</h2>
+  <div class="h2sub">L'automatisation, c'est le moteur. Une personne dédiée, c'est le pilote.</div>
+  <p class="desc" style="color:var(--muted);max-width:760px;margin:-14px 0 24px">Un logiciel ne décroche pas le téléphone à 20h, ne relance pas un client mécontent, ne passe pas d'appels sortants. Chaque automatisation est <b>pilotée par un(e) assistant(e) francophone dédié(e) à Madagascar</b> (passerelle téléphonique n° français), à <b>1 500 €/mois tout compris</b>.</p>
+  <div class="tbl-wrap" style="margin-bottom:22px">
+    <table>
+      <thead><tr><th>Renfort dédié</th><th>Ce qu'il fait chez vous — sur les douleurs qu'on a trouvées</th></tr></thead>
+      <tbody><!-- RÉPÉTER : 4 renforts mappés sur les douleurs du scan -->
+        <tr><td><b>{{RENFORT}}</b><br><span class="src">{{RENFORT_NOTE}}</span></td><td>{{RENFORT_MISSIONS}}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Le coût, sans détour</h3>
+      <div class="row"><span class="k">Assistant / ADV en France (coût complet)</span><span class="v dang">~3 800 €/mois</span></div>
+      <div class="row"><span class="k">Renfort Jonction — tout compris</span><span class="v ok">1 500 €/mois</span></div>
+      <div class="row"><span class="k">Économie par poste</span><span class="v">−2 300 €/mois</span></div>
+      <div class="row"><span class="k">Sur un an</span><span class="v cold">−27 600 €/an</span></div>
+      <p class="src" style="margin-top:10px">France = salaire chargé + congés/absences + recrutement/RH + poste de travail. Jonction : ni charges, ni RH, ni engagement.</p>
+    </div>
+    <div class="card" style="border-color:var(--cold2)">
+      <h3>Le seuil de rentabilité</h3>
+      <p style="color:var(--muted);font-size:14.5px">{{CONTEXTE_PANIER_MOYEN}}</p>
+      <div class="pitch" style="padding:18px 20px;margin-top:10px">
+        <div class="q" style="font-size:18px"><b>{{ARGUMENT_RENTABILITE}}</b></div>
       </div>
     </div>
-  </section>
+  </div>
+</div></section>
 
-  <section>
-    <h2>Sources</h2>
-    <ul style="margin-top:0">
-      <!-- RÉPÉTER : un lien par source réellement utilisée -->
-      <li><a href="{{URL}}">{{LIBELLE_SOURCE}}</a></li>
-    </ul>
-  </section>
-</div>
+<footer><div class="wrap">
+  <b>Dossier préparé par Jonction</b> — externalisation francophone &amp; automatisation. Données 100 % issues de sources ouvertes (registres publics, LinkedIn, web) collectées le {{DATE_SCAN}}. Chiffres financiers = dépôts de comptes publics. {{LIMITES_EVENTUELLES}}
+  <div class="src" style="margin-top:14px">{{LISTE_SOURCES_FOOTER}}</div>
+</div></footer>
+
+</body>
+</html>

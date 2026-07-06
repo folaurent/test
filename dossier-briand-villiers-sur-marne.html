@@ -1,247 +1,487 @@
+<!doctype html>
+<html lang="fr">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dossier — BRIAND SAS (Villiers-sur-Marne)</title>
+<title>Briand — Radiographie 360°</title>
 <style>
-  :root {
-    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e;
-    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
-    --border: rgba(11,11,11,0.10); --series: #2a78d6; --series-soft: #cde2fb;
-    --good: #0ca30c; --good-text: #006300; --critical: #d03b3b;
+  :root{
+    --bg:#0a0e14; --bg2:#080b11;  --panel:#111823; --panel2:#0d141d;
+    --line:#1e2a3a; --txt:#e7eef7; --muted:#8ea3bd; --dim:#5f7391;
+    --cold:#38bdf8; --cold2:#0ea5e9; --ok:#34d399; --warn:#fbbf24; --dang:#fb5b5b;
+    --accent:#f59e0b;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
-      --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
-      --border: rgba(255,255,255,0.10); --series: #3987e5; --series-soft: #184f95;
-      --good-text: #0ca30c;
-    }
-  }
-  :root[data-theme="dark"] {
-    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
-    --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
-    --border: rgba(255,255,255,0.10); --series: #3987e5; --series-soft: #184f95;
-    --good-text: #0ca30c;
-  }
-  :root[data-theme="light"] {
-    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e;
-    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
-    --border: rgba(11,11,11,0.10); --series: #2a78d6; --series-soft: #cde2fb;
-    --good-text: #006300;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--page); color: var(--ink);
-    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
-  }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 64px; }
-  header .kicker { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
-  h1 { font-size: 28px; margin: 6px 0 2px; }
-  .sub { color: var(--ink-2); margin: 0 0 10px; }
-  .badge {
-    display: inline-block; font-size: 13px; font-weight: 600; padding: 2px 10px;
-    border-radius: 999px; border: 1px solid var(--border);
-    color: var(--good-text); background: color-mix(in srgb, var(--good) 12%, transparent);
-  }
-  .meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
-  section { margin-top: 36px; }
-  h2 { font-size: 19px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--grid); }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
-  .tile {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px;
-  }
-  .tile .label { color: var(--ink-2); font-size: 13px; }
-  .tile .value { font-size: 26px; font-weight: 700; margin-top: 2px; }
-  .tile .note { color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
-  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-  .tablewrap { overflow-x: auto; }
-  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
-  thead th { color: var(--ink-2); font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--grid) 35%, var(--surface)); }
-  tr:last-child td { border-bottom: none; }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  ul { margin: 8px 0 0; padding-left: 20px; }
-  li { margin: 4px 0; }
-  a { color: var(--series); }
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } }
-  /* Bar chart — série unique (CA), teinte séquentielle bleue */
-  .chart { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 18px 10px; }
-  .chart .title { font-size: 14px; font-weight: 600; }
-  .chart .subtitle { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; }
-  .bars { display: flex; align-items: flex-end; gap: 14px; height: 160px; border-bottom: 1px solid var(--baseline); }
-  .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; position: relative; }
-  .bar .fill { width: 60%; max-width: 44px; background: var(--series); border-radius: 4px 4px 0 0; }
-  .bar:hover .fill { filter: brightness(1.12); }
-  .bar .val { font-size: 11.5px; color: var(--ink-2); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
-  .bar .nd { font-size: 11.5px; color: var(--muted); position: absolute; bottom: 6px; }
-  .xlab { display: flex; gap: 14px; margin-top: 6px; }
-  .xlab span { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
-  .foot { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#0f2233 0%,#0a0e14 55%);
+    color:var(--txt);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--cold)}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+  nav{position:sticky;top:0;z-index:50;background:rgba(10,14,20,.82);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;gap:6px;align-items:center;height:56px;overflow-x:auto;scrollbar-width:none}
+  nav .wrap::-webkit-scrollbar{display:none}
+  nav .brand{font-weight:800;letter-spacing:.4px;margin-right:14px;white-space:nowrap}
+  nav .brand span{color:var(--cold)}
+  nav a{color:var(--muted);text-decoration:none;font-size:13.5px;font-weight:600;padding:7px 11px;border-radius:8px;white-space:nowrap}
+  nav a:hover{color:var(--txt);background:#16202e}
+  header.hero{padding:64px 0 40px;border-bottom:1px solid var(--line)}
+  .kicker{color:var(--cold);font-weight:700;letter-spacing:2px;font-size:12.5px;text-transform:uppercase}
+  h1{font-size:clamp(34px,5vw,58px);line-height:1.02;margin:12px 0 8px;letter-spacing:-1px}
+  h1 b{color:var(--cold)}
+  .sub{color:var(--muted);font-size:18px;max-width:760px}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .tag{font-size:12.5px;color:var(--muted);border:1px solid var(--line);background:#0e1621;
+    padding:5px 11px;border-radius:999px}
+  .tag b{color:var(--txt)}
+  section{padding:52px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--cold);margin:0 0 4px}
+  h2+.h2sub{font-size:26px;font-weight:800;margin:0 0 26px;letter-spacing:-.5px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+  .kpi{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:18px}
+  .kpi .n{font-size:30px;font-weight:800;letter-spacing:-1px}
+  .kpi .l{color:var(--muted);font-size:13px;margin-top:2px}
+  .kpi .d{color:var(--dim);font-size:11.5px;margin-top:6px}
+  .cold{color:var(--cold)} .ok{color:var(--ok)} .warn{color:var(--warn)} .dang{color:var(--dang)}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:20px}
+  .card h3{margin:0 0 10px;font-size:16px}
+  .card p{margin:6px 0;color:var(--muted);font-size:14.5px}
+  .card ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+  .card li{margin:5px 0}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .row:last-of-type{border-bottom:0}
+  .row .k{color:var(--muted)} .row .v{font-weight:700;white-space:nowrap}
+  .bomb{background:linear-gradient(135deg,#2a0f12,#1a0c10);border:1px solid #6b2230;border-radius:16px;
+    padding:22px 24px;display:flex;gap:18px;align-items:flex-start}
+  .bomb .ic{font-size:30px;line-height:1}
+  .bomb h3{margin:0 0 6px;color:#ff8a8a;font-size:19px}
+  .bomb p{margin:5px 0;color:#e6c3c7;font-size:14.5px}
+  .bomb .proof{margin-top:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+    color:#ffb4b4;background:#160a0d;border:1px solid #3a1a20;border-radius:8px;padding:8px 11px;overflow-x:auto}
+  .bomb.amber{background:linear-gradient(135deg,#2a1e0a,#1a140a);border-color:#6b5222}
+  .bomb.amber h3{color:#ffd68a} .bomb.amber p{color:#e7d3a8}
+  .bomb.amber .proof{color:#ffd68a;background:#160f07;border-color:#3a2c14}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+  tbody tr:hover{background:#0f1927}
+  td b{color:var(--txt)}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  .badge{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.5px;padding:3px 9px;border-radius:6px}
+  .badge.b-red{background:#160a0d;border:1px solid #3a1a20;color:#ff9a9a}
+  .badge.b-amber{background:#160f07;border:1px solid #3a2c14;color:#ffd68a}
+  .org{display:grid;gap:14px}
+  .orgrow{display:grid;gap:12px}
+  .r3{grid-template-columns:repeat(3,1fr)} .r4{grid-template-columns:repeat(4,1fr)}
+  .person{background:#0e1621;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .person.boss{border-color:var(--cold2);background:linear-gradient(160deg,#0e2233,#0c1622);box-shadow:0 0 0 1px #0e3350 inset}
+  .person .nm{font-weight:700;font-size:14.5px}
+  .person .ro{color:var(--muted);font-size:12.5px}
+  .person .an{color:var(--dim);font-size:11px;margin-top:3px}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.4px;padding:2px 7px;border-radius:999px;margin-bottom:5px}
+  .pill.dir{background:#0e3350;color:var(--cold)} .pill.com{background:#153021;color:var(--ok)}
+  .pill.adv{background:#31240c;color:var(--warn)} .pill.tec{background:#231633;color:#c4a2ff}
+  .axe{display:grid;grid-template-columns:44px 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .axe:last-child{border-bottom:0}
+  .axe .num{font-size:24px;font-weight:800;color:var(--cold);opacity:.6}
+  .axe h3{margin:0 0 4px;font-size:16.5px}
+  .axe p{margin:0;color:var(--muted);font-size:14px}
+  .axe .why{color:var(--dim);font-size:12.5px;margin-top:6px}
+  .pitch{background:linear-gradient(135deg,#082033,#0a1420);border:1px solid var(--cold2);border-radius:18px;padding:30px 32px}
+  .pitch .q{font-size:21px;line-height:1.5;font-weight:600}
+  .pitch .q b{color:var(--cold)}
+  footer{padding:34px 0 60px;color:var(--dim);font-size:12.5px}
+  .src{color:var(--dim);font-size:11.5px;margin-top:10px}
+  @media(max-width:820px){.g2,.g3,.r3,.r4{grid-template-columns:1fr}.axe{grid-template-columns:1fr}}
+  @media print{nav{display:none}body{background:#fff;color:#111}.card,.kpi{break-inside:avoid}}
 </style>
+</head>
+<body>
 
-<div class="wrap">
-  <header>
-    <div class="kicker">Dossier entreprise · scan du 5 juillet 2026</div>
-    <h1>BRIAND SAS</h1>
-    <p class="sub">Entreprise générale de bâtiment — 351 impasse des Armoiries, 94350 Villiers-sur-Marne</p>
-    <span class="badge">✓ En activité — aucune procédure collective</span>
-    <div class="meta">SIREN 334 982 451 · SIRET siège 334 982 451 00059 · RCS Créteil · SAS au capital de 100 000 €</div>
-  </header>
+<nav><div class="wrap">
+  <div class="brand">BRIAND <span>BÂTIMENT</span> · 360°</div>
+  <a href="#synth">Synthèse</a>
+  <a href="#legal">Société &amp; statuts</a>
+  <a href="#org">Organigramme</a>
+  <a href="#conc">Concurrents</a>
+  <a href="#marche">Marché</a>
+  <a href="#refs">Références</a>
+  <a href="#marches">Marchés publics</a>
+  <a href="#seo">Écart SEO</a>
+  <a href="#digital">Audit digital</a>
+  <a href="#axes">Automatisation</a>
+  <a href="#renforts">Renforts Jonction</a>
+</div></nav>
 
-  <section>
-    <h2>Chiffres clés</h2>
-    <div class="tiles">
-      <div class="tile"><div class="label">Chiffre d'affaires 2022</div><div class="value">25,7 M€</div><div class="note">dernier exercice public</div></div>
-      <div class="tile"><div class="label">Résultat net 2022</div><div class="value">2,34 M€</div><div class="note">marge nette ≈ 9 %</div></div>
-      <div class="tile"><div class="label">Effectif</div><div class="value">≈ 47</div><div class="note">tranche INSEE 20-49 (2023)</div></div>
-      <div class="tile"><div class="label">Ancienneté</div><div class="value">40 ans</div><div class="note">créée le 4 mars 1986</div></div>
-    </div>
-  </section>
+<header class="hero"><div class="wrap">
+  <div class="kicker">Dossier de rendez-vous — préparé par Jonction · 6 juillet 2026</div>
+  <h1>Briand,<br><b>passé au scanner.</b></h1>
+  <p class="sub">Tout ce qu'on a pu reconstituer sur votre maison — société, groupe, concurrents, marché, marchés publics et présence digitale — à partir de sources 100 % ouvertes, en quelques heures. Voilà ce qu'une machine bien pilotée voit de vous.</p>
+  <div class="tags">
+    <span class="tag">BRIAND · SAS · SIREN <b>334 982 451</b></span>
+    <span class="tag">Villiers-sur-Marne (94)</span>
+    <span class="tag">Depuis <b>1986</b> · groupe familial Boeri</span>
+    <span class="tag"><b>QUALIBAT RGE</b> · réf. Passivhaus</span>
+    <span class="tag">Conv. coll. bâtiment <b>IDCC 1597/2609/2420</b></span>
+  </div>
+</div></header>
 
-  <section>
-    <h2>Fiche d'identité</h2>
-    <div class="tablewrap">
-    <table>
-      <tr><td>Dénomination</td><td><strong>BRIAND</strong> (nom commercial : BRIAND SAS)</td></tr>
-      <tr><td>SIREN / SIRET siège</td><td>334 982 451 / 334 982 451 00059</td></tr>
-      <tr><td>Forme juridique</td><td>Société par actions simplifiée (SAS), capital 100 000 €</td></tr>
-      <tr><td>Création</td><td>4 mars 1986 — RCS Créteil</td></tr>
-      <tr><td>Siège</td><td>351 impasse des Armoiries, 94350 Villiers-sur-Marne</td></tr>
-      <tr><td>Activité (NAF)</td><td>43.99C — Travaux de maçonnerie générale et gros œuvre de bâtiment</td></tr>
-      <tr><td>Effectif</td><td>Tranche 20-49 salariés (INSEE 2023) ; ~47 selon annuaires</td></tr>
-      <tr><td>Catégorie</td><td>PME · 4 établissements au total, 1 ouvert</td></tr>
-      <tr><td>Certifications</td><td>QUALIBAT RGE — qualifications n° 2112D111, 2112D112, 2112D115, 2121D112, 6311D111</td></tr>
-      <tr><td>Conventions collectives</td><td>IDCC 1597 (ouvriers bâtiment &gt; 10), 2609 (ETAM bâtiment), 2420 (cadres bâtiment)</td></tr>
-      <tr><td>Site web</td><td><a href="https://briand-sas.fr/">briand-sas.fr</a></td></tr>
-    </table>
-    </div>
-  </section>
+<!-- SYNTHESE -->
+<section id="synth"><div class="wrap">
+  <h2>Synthèse express</h2>
+  <div class="h2sub">Les chiffres qui vous identifient — vérifiés au registre</div>
+  <div class="kpis">
+    <div class="kpi"><div class="n cold">25,73 M€</div><div class="l">Chiffre d'affaires 2022</div><div class="d">Dernier exercice public (clos 31/12/2022)</div></div>
+    <div class="kpi"><div class="n ok">2,34 M€</div><div class="l">Résultat net 2022</div><div class="d">Marge nette ≈ 9,1 % · endettement 0,2 %</div></div>
+    <div class="kpi"><div class="n">47</div><div class="l">Salariés (tranche INSEE 20-49)</div><div class="d">1 133 abonnés LinkedIn</div></div>
+    <div class="kpi"><div class="n">100 000 €</div><div class="l">Capital social</div><div class="d">SAS · CAC : FICOGEX</div></div>
+    <div class="kpi"><div class="n cold">15</div><div class="l">Marchés publics notifiés</div><div class="d">Open data DECP · 2019-2023</div></div>
+    <div class="kpi"><div class="n dang">2021</div><div class="l">Dernière mise à jour du site</div><div class="d">Généré le 14/09/2021 — figé depuis ~5 ans</div></div>
+  </div>
 
-  <section>
-    <h2>Activité</h2>
+  <div style="margin-top:22px" class="grid g2">
     <div class="card">
-      Entreprise générale de bâtiment intervenant principalement en Île-de-France, sur quatre métiers :
+      <h3>✅ Une maison saine et en pleine croissance</h3>
       <ul>
-        <li><strong>Gros œuvre</strong> et <strong>maçonnerie</strong> (cœur d'activité, NAF 43.99C)</li>
-        <li><strong>Carrelage</strong></li>
-        <li><strong>Menuiserie</strong> — portée par la société sœur BRIAND MENUISERIE</li>
-      </ul>
-      Les qualifications QUALIBAT RGE indiquent un positionnement également sur la rénovation énergétique.
-    </div>
-  </section>
-
-  <section>
-    <h2>Gouvernance</h2>
-    <div class="tablewrap">
-    <table>
-      <thead><tr><th>Rôle</th><th>Titulaire</th></tr></thead>
-      <tr><td>Président</td><td>GROUPE BOERI (personne morale — holding familiale)</td></tr>
-      <tr><td>Directeur général</td><td>Jean-Claude BOERI (né en 1956)</td></tr>
-      <tr><td>Commissaire aux comptes titulaire</td><td>FICOGEX SA</td></tr>
-      <tr><td>Commissaire aux comptes suppléant</td><td>Xavier FLAMENT</td></tr>
-    </table>
-    </div>
-  </section>
-
-  <section>
-    <h2>Finances</h2>
-    <div class="chart">
-      <div class="title">Chiffre d'affaires — exercices publiés (INPI)</div>
-      <div class="subtitle">En millions d'euros · 2021 non publié (dépôt confidentiel)</div>
-      <div class="bars">
-        <div class="bar" title="2016 : 12 262 102 €"><span class="val">12,3</span><div class="fill" style="height:48%"></div></div>
-        <div class="bar" title="2017 : 10 184 438 €"><div class="fill" style="height:40%"></div></div>
-        <div class="bar" title="2018 : 13 028 212 €"><div class="fill" style="height:51%"></div></div>
-        <div class="bar" title="2019 : 14 578 664 €"><div class="fill" style="height:57%"></div></div>
-        <div class="bar" title="2020 : 15 234 723 €"><div class="fill" style="height:59%"></div></div>
-        <div class="bar" title="2021 : non publié"><span class="nd">n.d.</span></div>
-        <div class="bar" title="2022 : 25 729 154 €"><span class="val">25,7</span><div class="fill" style="height:100%"></div></div>
-      </div>
-      <div class="xlab"><span>2016</span><span>2017</span><span>2018</span><span>2019</span><span>2020</span><span>2021</span><span>2022</span></div>
-      <div class="foot">Source : ratios INPI-BCE (data.economie.gouv.fr). Détail complet dans le tableau ci-dessous.</div>
-    </div>
-    <br>
-    <div class="tablewrap">
-    <table>
-      <thead><tr><th>Exercice clos</th><th class="num">Chiffre d'affaires</th><th class="num">Résultat net</th><th class="num">EBE</th><th class="num">Liquidité générale</th><th class="num">Taux d'endettement</th></tr></thead>
-      <tr><td>31/12/2016</td><td class="num">12 262 102 €</td><td class="num">543 539 €</td><td class="num">838 923 €</td><td class="num">134,6 %</td><td class="num">16,6 %</td></tr>
-      <tr><td>31/12/2017</td><td class="num">10 184 438 €</td><td class="num">528 464 €</td><td class="num">856 846 €</td><td class="num">147,4 %</td><td class="num">11,7 %</td></tr>
-      <tr><td>31/12/2018</td><td class="num">13 028 212 €</td><td class="num">492 479 €</td><td class="num">734 028 €</td><td class="num">140,0 %</td><td class="num">20,7 %</td></tr>
-      <tr><td>31/12/2019</td><td class="num">14 578 664 €</td><td class="num">870 596 €</td><td class="num">1 157 185 €</td><td class="num">147,4 %</td><td class="num">7,6 %</td></tr>
-      <tr><td>31/12/2020</td><td class="num">15 234 723 €</td><td class="num">954 368 €</td><td class="num">1 519 941 €</td><td class="num">152,7 %</td><td class="num">29,0 %</td></tr>
-      <tr><td>31/12/2022</td><td class="num">25 729 154 €</td><td class="num">2 344 842 €</td><td class="num">2 893 253 €</td><td class="num">164,2 %</td><td class="num">0,2 %</td></tr>
-    </table>
-    </div>
-    <div class="card" style="margin-top:12px">
-      <strong>Lecture :</strong>
-      <ul>
-        <li>CA plus que doublé entre 2017 (10,2 M€) et 2022 (25,7 M€) — croissance forte et régulière.</li>
-        <li>Rentabilité en nette amélioration : marge nette ≈ 9 % en 2022 contre 4-5 % historiquement.</li>
-        <li>Structure très saine au dernier bilan public : endettement quasi nul (0,2 %), liquidité confortable (164 %).</li>
-        <li>Exercices 2021 et 2023-2025 déposés en confidentiel ; dernier dépôt de comptes au BODACC le 7 juin 2026 — l'entreprise est à jour de ses obligations.</li>
+        <li>RCS Créteil <b>actif</b>, <b>aucune procédure collective</b> (21 annonces BODACC vérifiées depuis 2008)</li>
+        <li>Comptes déposés chaque année — dernier dépôt publié le <b>7 juin 2026</b></li>
+        <li>CA <b>×2,5 entre 2017 et 2022</b> (10,2 → 25,7 M€), marge nette passée de ~5 % à 9 %</li>
+        <li>Structure très saine : endettement <b>0,2 %</b>, liquidité générale 164 % (2022)</li>
       </ul>
     </div>
-  </section>
-
-  <section>
-    <h2>Groupe d'appartenance — GROUPE BOERI</h2>
-    <p style="color:var(--ink-2);margin-top:0">Toutes les entités sont domiciliées au 351 impasse des Armoiries à Villiers-sur-Marne. Direction opérationnelle : Jean-Claude Boeri ; présidence de la holding : Fabien Boeri — configuration typique d'une transmission familiale en cours.</p>
-    <div class="tablewrap">
-    <table>
-      <thead><tr><th>Société</th><th>SIREN</th><th>Activité</th><th>Rôle / finances connues</th></tr></thead>
-      <tr><td><strong>GROUPE BOERI</strong></td><td>529 170 680</td><td>Holding (64.20Z), créée 2011</td><td>Président : Fabien Boeri ; DG : Jean-Claude Boeri. Résultat net 2022 : 2,39 M€</td></tr>
-      <tr><td><strong>BRIAND SAS</strong></td><td>334 982 451</td><td>Gros œuvre (43.99C)</td><td>Filiale principale — CA 2022 : 25,7 M€</td></tr>
-      <tr><td><strong>BRIAND MENUISERIE</strong></td><td>532 353 794</td><td>Menuiserie (43.32A), créée 2011</td><td>10-19 salariés. CA ~2,8-3,3 M€ (2016-2021), comptes confidentiels depuis ; résultat net 2024 : 715 855 €. Présidée par MIRES INVESTISSEMENTS</td></tr>
-      <tr><td><strong>CENI</strong></td><td>479 062 978</td><td>Travaux spécialisés (43.99C), créée 2004</td><td>Présidée par GROUPE BOERI. CA 2023 : 725 k€</td></tr>
-      <tr><td><strong>SCI EBAL</strong></td><td>989 888 060</td><td>Immobilier (68.20B), créée 2025</td><td>Gérant : Fabien Boeri ; associés : GROUPE BOERI et MIRES INVESTISSEMENTS</td></tr>
-    </table>
-    </div>
-  </section>
-
-  <section>
-    <h2>Historique juridique (BODACC)</h2>
     <div class="card">
-      <ul style="margin-top:0">
-        <li>21 annonces publiées depuis 2008 — <strong>aucune procédure collective</strong> (ni sauvegarde, ni redressement, ni liquidation).</li>
-        <li>Dépôts de comptes réguliers chaque année ; dernier dépôt le 7 juin 2026.</li>
-        <li>Modifications diverses en 2009, 2012 (transfert du siège au 351 impasse des Armoiries) et 2015 (gouvernance/statuts).</li>
+      <h3>🎯 Une structuration de groupe et une transmission en cours</h3>
+      <ul>
+        <li>Holding <b>GROUPE BOERI</b> (2011) présidée par <b>Fabien Boeri</b> — Jean-Claude Boeri (né 1956) reste DG</li>
+        <li><b>SCI EBAL créée le 24/07/2025</b> au siège, avec GROUPE BOERI et MIRES INVESTISSEMENTS</li>
+        <li>4 entités au 351 impasse des Armoiries : BRIAND, BRIAND MENUISERIE, CENI, GROUPE BOERI</li>
+        <li>Signal : montée en puissance de la génération suivante — le bon moment pour outiller la maison</li>
       </ul>
     </div>
-  </section>
+  </div>
+</div></section>
 
-  <section>
-    <h2>Synthèse</h2>
-    <div class="cols">
-      <div class="card">
-        <strong style="color:var(--good-text)">Points forts</strong>
-        <ul>
-          <li>40 ans d'ancienneté, actionnariat familial stable, aucune procédure collective.</li>
-          <li>Croissance soutenue : +150 % de CA entre 2017 et 2022, rentabilité en hausse.</li>
-          <li>Endettement quasi nul et trésorerie confortable au dernier bilan public.</li>
-          <li>Qualifications QUALIBAT RGE actives, conventions collectives du bâtiment appliquées.</li>
-        </ul>
-      </div>
-      <div class="card">
-        <strong style="color:var(--critical)">Points de vigilance</strong>
-        <ul>
-          <li>Comptes 2021 et 2023-2025 non accessibles publiquement : chiffres récents non vérifiables en source ouverte.</li>
-          <li>Forte dépendance présumée au marché du BTP francilien.</li>
-          <li>Homonymes sans lien : <em>Groupe Briand</em> (constructeur métallique vendéen) et <em>Briand Rampanana</em> (entrepreneur individuel, Villiers-sur-Marne, SIREN 440 718 690).</li>
-        </ul>
+<!-- LEGAL -->
+<section id="legal"><div class="wrap">
+  <h2>Société &amp; statuts</h2>
+  <div class="h2sub">Un groupe familial à deux générations, quatre sociétés, une adresse</div>
+  <div class="grid g3">
+    <div class="card">
+      <h3>Jean-Claude Boeri</h3>
+      <p>Directeur Général de BRIAND et BRIAND MENUISERIE · né 1956</p>
+      <p class="src">Génération dirigeante historique · DG de la holding</p>
+    </div>
+    <div class="card" style="border-color:var(--cold2)">
+      <h3>Fabien Boeri <span class="pill dir">DÉCIDEUR</span></h3>
+      <p>Président de GROUPE BOERI (présidente de BRIAND SAS) · gérant de la SCI EBAL (2025)</p>
+      <p class="src">Génération montante · pilote la structuration patrimoniale</p>
+    </div>
+    <div class="card">
+      <h3>GROUPE BOERI</h3>
+      <p>Holding (64.20Z, créée 2011) · présidente de BRIAND et CENI</p>
+      <p class="src">Résultat net 2022 : 2,39 M€ · CAC FICOGEX</p>
+    </div>
+  </div>
+
+  <div style="margin-top:16px" class="grid g2">
+    <div class="card">
+      <h3>Identité légale</h3>
+      <ul>
+        <li>Dénomination : <b>BRIAND</b> · SAS au capital de 100 000 € · RCS Créteil</li>
+        <li>NAF <b>43.99C</b> (maçonnerie générale &amp; gros œuvre) · créée le 4 mars 1986</li>
+        <li>Siège : 351 impasse des Armoiries, Villiers-sur-Marne · 4 établissements (1 ouvert)</li>
+        <li>Qualifications <b>QUALIBAT RGE</b> actives (5 n° RGE au Sirene) · référence <b>Passivhaus</b> affichée</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Historique récent au registre (BODACC)</h3>
+      <ul>
+        <li><b>07/06/2026</b> — dépôt des comptes (exercices récents déposés en confidentiel)</li>
+        <li><b>24/07/2025</b> — création de la SCI EBAL au siège (registre)</li>
+        <li><b>2015</b> — modifications gouvernance/statuts · <b>2012</b> — transfert du siège impasse des Armoiries</li>
+        <li>Dépôts annuels réguliers depuis 2008 · aucune alerte, aucune procédure</li>
+      </ul>
+    </div>
+  </div>
+  <p class="src">Sources : recherche-entreprises.api.gouv.fr · BODACC (opendatasoft) · INSEE/Sirene · ratios INPI-BCE (data.economie.gouv.fr).</p>
+</div></section>
+
+<!-- ORG -->
+<section id="org"><div class="wrap">
+  <h2>Organigramme reconstitué</h2>
+  <div class="h2sub">La structure du groupe vue du registre — le scan nominatif LinkedIn prend ~0,20 € de plus</div>
+  <div class="org">
+    <div class="orgrow r3">
+      <div class="person boss"><span class="pill dir">DIRECTION</span><div class="nm">Fabien Boeri</div><div class="ro">Président GROUPE BOERI</div><div class="an">Holding créée en 2011 · SCI EBAL 2025</div></div>
+      <div class="person boss"><span class="pill dir">DIRECTION</span><div class="nm">Jean-Claude Boeri</div><div class="ro">Directeur Général BRIAND &amp; BRIAND MENUISERIE</div><div class="an">Né en 1956 · génération historique</div></div>
+      <div class="person boss"><span class="pill dir">CONTRÔLE</span><div class="nm">FICOGEX</div><div class="ro">Commissaire aux comptes titulaire</div><div class="an">Suppléant : Xavier Flament</div></div>
+    </div>
+    <div class="orgrow r4">
+      <div class="person"><span class="pill com">GROUPE</span><div class="nm">BRIAND SAS</div><div class="ro">Gros œuvre · 47 sal. · CA 25,7 M€ (2022)</div></div>
+      <div class="person"><span class="pill com">GROUPE</span><div class="nm">BRIAND MENUISERIE</div><div class="ro">Menuiserie · 10-19 sal. · RN 2024 : 716 k€</div></div>
+      <div class="person"><span class="pill com">GROUPE</span><div class="nm">CENI</div><div class="ro">Travaux spécialisés · CA 2023 : 725 k€</div></div>
+      <div class="person"><span class="pill com">GROUPE</span><div class="nm">SCI EBAL + MIRES INVEST.</div><div class="ro">Volet patrimonial / immobilier</div></div>
+    </div>
+    <div class="orgrow r4">
+      <div class="person"><span class="pill adv">ÉTUDES</span><div class="nm">Pôle études de prix / travaux</div><div class="ro">Conducteurs de travaux, chiffrage AO</div><div class="an">⚠ métiers en pénurie nationale (BMO 2026)</div></div>
+      <div class="person"><span class="pill tec">TERRAIN</span><div class="nm">Équipes gros œuvre</div><div class="ro">Maçons, coffreurs, chefs de chantier</div><div class="an">⚠ maçon = 1er métier en tension du BTP</div></div>
+      <div class="person"><span class="pill tec">TERRAIN</span><div class="nm">Équipes carrelage / menuiserie</div><div class="ro">Via BRIAND &amp; BRIAND MENUISERIE</div></div>
+      <div class="person"><span class="pill adv">SUPPORT</span><div class="nm">~40 collaborateurs</div><div class="ro">Reconstitution nominative LinkedIn : sur demande</div></div>
+    </div>
+  </div>
+  <p class="src">Page entreprise LinkedIn : <b>1 133 abonnés</b> · effectif INSEE 20-49 (47 selon annuaires) · positionnement affiché : accords-cadres collectivités, ferroviaire (tram/métro/RER), restauration collective, ERP. Le scan nominatif complet de l'équipe (noms, postes, anciennetés) n'a volontairement pas été lancé pour cette démo — coût ≈ 0,20 €. Sources : linkedin.com/company/briand-sas · registre.</p>
+</div></section>
+
+<!-- CONCURRENTS -->
+<section id="conc"><div class="wrap">
+  <h2>Paysage concurrentiel — Île-de-France Est</h2>
+  <div class="h2sub">Des majors au-dessus, des petits visibles en dessous — et vous, invisibles au milieu</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Acteur</th><th>Taille</th><th>Positionnement</th><th>Force digitale</th></tr></thead>
+      <tbody>
+        <tr><td><b>Urbaine de Travaux</b> (groupe Fayat)<br><span class="src">Viry-Châtillon (91)</span></td><td>CA <b>143,8 M€</b> (2024)<br>rés. net 7,3 M€ · 250-499 sal.</td><td>Entreprise générale gros œuvre/TCE, gros marchés publics IDF, adossée au 4ᵉ groupe de BTP français.</td><td>Site groupe Fayat qui ranke sur « entreprise générale bâtiment Paris IDF » — la vitrine d'un major.</td></tr>
+        <tr><td><b>Brézillon</b> (Bouygues Construction)<br><span class="src">Margny-lès-Compiègne (60)</span></td><td>CA <b>43,0 M€</b> (2024)<br>rés. net 5,5 M€ · 50-99 sal.</td><td>Réhabilitation lourde &amp; dépollution, force de frappe d'un major sur vos territoires.</td><td>Notoriété de marque Bouygues, communication corporate continue.</td></tr>
+        <tr><td><b>FT Bâtiment</b><br><span class="src">Paris / Yvelines</span></td><td>CA 1,9 M€ (2023)<br>PME</td><td>Généraliste bâtiments publics : crèches, écoles, centres culturels, hôpitaux — votre créneau exact.</td><td><b>Ranke n°1</b> sur « gros œuvre bâtiment public Île-de-France » avec une page dédiée par offre.</td></tr>
+        <tr><td><b>MTPVM (« MTP 94 »)</b><br><span class="src">Vitry-sur-Seine (94)</span></td><td>10-19 sal.<br>comptes non publiés</td><td>Quasi-jumeau local : maçonnerie générale &amp; gros œuvre 94 depuis 2008.</td><td>Référencé dans tous les annuaires (Prodes, e-pro) qui trustent la 1ʳᵉ page Google du 94.</td></tr>
+        <tr><td><b>EGV</b><br><span class="src">Chelles (77)</span></td><td>CA <b>919 k€</b> (2024)<br>6-9 sal.</td><td>Micro-entreprise de gros œuvre… 25 fois plus petite que vous.</td><td>Et pourtant : page « entreprise gros œuvre Île-de-France » qui <b>capte la requête régionale</b> que vous ne captez pas.</td></tr>
+        <tr><td><b>Baticor</b><br><span class="src">Val-de-Marne</span></td><td>Artisan / PME</td><td>Maçonnerie-rénovation locale.</td><td>Page SEO dédiée « maçonnerie de gros œuvre <b>Villiers-sur-Marne</b> » — sur votre propre commune.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Tailles vérifiées le 06/07/2026 sur recherche-entreprises.api.gouv.fr (SIREN 321057978, 925520108, 511973620, 390543957, 797586609). Positionnements : sites des intéressés (batiment.fayat.com, ft-batiment.fr, egv-batiment.fr, maconnerie-renovation-94.fr).</p>
+</div></section>
+
+<!-- MARCHE -->
+<section id="marche"><div class="wrap">
+  <h2>Marché &amp; réglementation</h2>
+  <div class="h2sub">La pire récession du bâtiment depuis des décennies s'achève — les solides ramassent la mise</div>
+  <div class="kpis">
+    <div class="kpi"><div class="n cold">208 Md€</div><div class="l">CA du bâtiment France 2024</div><div class="d">−6,6 % en volume · 68 574 défaillances France 2025, ~¼ dans la construction</div></div>
+    <div class="kpi"><div class="n ok">+19,8 %</div><div class="l">Logements autorisés IDF 2025</div><div class="d">64 800 permis · commencés : 44 900 (+5,6 %)</div></div>
+    <div class="kpi"><div class="n ok">+9,5 %</div><div class="l">Logement neuf prévu 2026 (FFB)</div><div class="d">Bâtiment total : +1,8 % — rebond tiré par le collectif</div></div>
+    <div class="kpi"><div class="n warn">65 %</div><div class="l">Recrutements BTP jugés difficiles</div><div class="d">BMO 2026 · maçons : 1er métier en tension (14 000+ projets)</div></div>
+  </div>
+  <div style="margin-top:18px" class="grid g3">
+    <div class="card">
+      <h3>🏗️ RE2020</h3>
+      <p>Seuils carbone renforcés par paliers <b>2025 → 2028 → 2031</b> sur toute construction neuve : matériaux biosourcés, béton bas carbone, conception exigeante.</p>
+      <p class="why">→ Votre référence Passivhaus et vos qualifications RGE deviennent un argument de sélection en AO — à condition de le faire savoir.</p>
+    </div>
+    <div class="card">
+      <h3>🏠 Interdiction des passoires</h3>
+      <p>Loi Climat &amp; Résilience : location interdite aux logements <b>G depuis 2025, F en 2028, E en 2034</b>. Les bailleurs sociaux et copropriétés doivent lancer des travaux lourds.</p>
+      <p class="why">→ Vague de réhabilitations gros œuvre chez les bailleurs du 94 — vos acheteurs publics d'hier sont vos clients rénovation de demain.</p>
+    </div>
+    <div class="card">
+      <h3>⚡ Rénovation énergétique</h3>
+      <p>Marché de <b>31 Md€</b> (15 % du bâtiment). MaPrimeRénov' en stop-and-go (suspendue juin 2025, rouverte sous quota), mais ~3,6 Md€/an maintenus et RGE obligatoire.</p>
+      <p class="why">→ Le label RGE que vous avez déjà est le ticket d'entrée ; les rénovations d'ampleur (55 k€ de travaux moyens) montent en puissance.</p>
+    </div>
+  </div>
+  <p class="src">Sources : FFB « Le bâtiment en chiffres » &amp; bilan 2025/prévisions 2026 · FFB Grand Paris IDF (mars 2026, via Batiweb/Le Moniteur) · SDES Sit@del résultats déc. 2025 · France Travail BMO 2026 · EY bilan défaillances 2025 · Anah bilan 2024 · Légifrance/EUR-Lex.</p>
+</div></section>
+
+<!-- REFERENCES -->
+<section id="refs"><div class="wrap">
+  <h2>Vos références</h2>
+  <div class="h2sub">30+ pages de chantiers publiés… sur un site que personne ne visite depuis 2021</div>
+  <div class="grid g3">
+    <div class="card"><h3>🚇 Ferroviaire &amp; transports</h3><ul>
+      <li><b>Station RATP Château Rouge</b> (métro)</li>
+      <li><b>Station Volontaires</b> (RATP) · <b>RER B Parc de Sceaux</b></li>
+      <li><b>Station de tramway Viroflay</b></li>
+    </ul></div>
+    <div class="card"><h3>🎓 Éducation &amp; petite enfance</h3><ul>
+      <li><b>Groupe scolaire Politzer</b> · <b>école Polangis</b> (Joinville)</li>
+      <li>Crèches <b>Chevilly-Larue</b>, <b>Orly</b> (Parc Cloche), <b>Julien Masselier</b></li>
+      <li><b>Cuisine centrale intercommunale</b> · centre PMI Orly</li>
+    </ul></div>
+    <div class="card"><h3>🏢 Tertiaire, culture &amp; sport</h3><ul>
+      <li><b>Siège SIETRAM</b> · <b>RIE Raspail</b> · <b>Le Magellan</b></li>
+      <li><b>Cinéma Studio 66</b> (Champigny) · <b>dojo de Nogent</b> · tennis couverts</li>
+      <li><b>Hôtel Classics</b> (réhabilitation) · Moulin de Beauté · maison de quartier Ferme du Buisson</li>
+    </ul></div>
+  </div>
+  <p class="src">30 réalisations publiées sur briand-sas.fr (sitemap : 53 pages) — <b>0 étude de cas récente, 0 post LinkedIn visible, page « chantiers en cours » figée</b>. Chaque chantier est un contenu déjà payé qui ne rapporte plus rien. Source : briand-sas.fr/sitemap.xml, consulté le 06/07/2026.</p>
+</div></section>
+
+<!-- MARCHES PUBLICS -->
+<section id="marches"><div class="wrap">
+  <h2>Marchés publics</h2>
+  <div class="h2sub">Titulaire actif et récurrent — le vrai moteur commercial de la maison</div>
+  <div class="kpis" style="margin-bottom:18px">
+    <div class="kpi"><div class="n cold">15</div><div class="l">Marchés publics distincts notifiés</div><div class="d">Open data DECP · 2019-2023</div></div>
+    <div class="kpi"><div class="n cold">~26 M€</div><div class="l">Cumul brut notifié</div><div class="d">Plafonds de bons de commande inclus (signalés)</div></div>
+    <div class="kpi"><div class="n">48-58 mois</div><div class="l">Accords-cadres pluriannuels</div><div class="d">Préfecture IDF, SGAMI, Malakoff, Choisy…</div></div>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Acheteur public</th><th>Objet</th><th>Montant</th></tr></thead>
+      <tbody>
+        <tr><td>Préfecture de région Île-de-France</td><td>Accord-cadre régional travaux courants des bâtiments de l'État — lot maçonnerie/plâtrerie/déconstruction (48 mois)</td><td><b>50 M€</b> <span class="src">(plafond AC multi-attributaires)</span></td></tr>
+        <tr><td>SGAMI / Ministère de l'Intérieur</td><td>Marché subséquent entretien-réparation des bâtiments (58 mois)</td><td><b>8,33 M€</b> <span class="src">(plafond)</span></td></tr>
+        <tr><td>Champigny-sur-Marne</td><td>AC réparations &amp; rénovations (2019) · construction de la <b>Médiathèque</b> (2020)</td><td><b>4,5 M€</b> <span class="src">(plafond)</span> + <b>3,02 M€</b></td></tr>
+        <tr><td>Saint-Maur-des-Fossés</td><td>Agrandissement groupe scolaire <b>Gatin/Marin</b> (2020) · lot GO/CEA/VRD (2021)</td><td><b>3,68 M€</b> + <b>2,30 M€</b></td></tr>
+        <tr><td>Malakoff</td><td>AC entretien bâtiments communaux (48 mois) · rénovation thermique école <b>Paulette Nardal</b></td><td>800 k€ <span class="src">(plafond)</span> + <b>1,15 M€</b></td></tr>
+        <tr><td>SEMAPA (aménageur Paris)</td><td>Travaux d'installation, terrassement/démolition, fondations, gros œuvre</td><td><b>1,50 M€</b></td></tr>
+        <tr><td>Choisy-le-Roi · Joinville · Min. affaires sociales</td><td>AC bâtiments communaux 48 mois (2 lots, 2023) · plâtrerie/menuiseries · entretien</td><td>140 k€ + 25 k€ + 200 k€ <span class="src">(plafonds)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Activité mixte : gros projets (médiathèque, écoles) + accords-cadres d'entretien récurrents multi-collectivités → terrain idéal pour automatiser veille AO, mémoires techniques, bons de commande et facturation. Dernier marché DECP publié : 2023 — la veille AO mérite d'être re-musclée. Source : API DECP data.economie.gouv.fr (SIREN 334982451), dédupliqué le 06/07/2026.</p>
+</div></section>
+
+<!-- SEO GAP -->
+<section id="seo"><div class="wrap">
+  <h2>Écart SEO — le trou dans la raquette</h2>
+  <div class="h2sub">Absent sur les requêtes métier testées — même votre ville est disputée</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Requête (intention d'achat)</th><th>Qui capte le client</th><th>Briand ?</th></tr></thead>
+      <tbody>
+        <tr><td>entreprise gros œuvre / maçonnerie Val-de-Marne + marchés publics</td><td>Annuaires (PagesJaunes, Obat, La Gazette) + MTP 94, Construct Deco</td><td><span class="badge b-red">ABSENT</span></td></tr>
+        <tr><td>entreprise générale de bâtiment IDF — écoles, crèches, collectivités <span class="src">(votre cœur de métier exact)</span></td><td>FT Bâtiment (n°1), SBM, Fayat, EGV, Aliance Travaux</td><td><span class="badge b-red">ABSENT</span></td></tr>
+        <tr><td><b>entreprise gros œuvre Villiers-sur-Marne</b> (votre ville)</td><td>3 annuaires devant vous + Baticor (page dédiée à votre commune)</td><td><span class="badge b-amber">4ᵉ — derrière les annuaires</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:16px" class="grid g3">
+    <div class="kpi"><div class="n dang">53</div><div class="l">Pages indexables briand-sas.fr</div><div class="d">…toutes générées avant sept. 2021, zéro blog</div></div>
+    <div class="kpi"><div class="n">919 k€</div><div class="l">CA d'EGV (Chelles)</div><div class="d">25× plus petit que vous — et visible sur « gros œuvre IDF »</div></div>
+    <div class="kpi"><div class="n">n°1</div><div class="l">FT Bâtiment sur les bâtiments publics</div><div class="d">Une page par type d'ouvrage : crèche, école, hôpital…</div></div>
+  </div>
+  <p class="src">Requêtes testées le 06/07/2026 (3 requêtes métier ; les requêtes sur la marque « Briand Villiers-sur-Marne » renvoient bien votre site et vos fiches societe.com/Pappers). Le contenu existe — 30 références — mais aucune page n'est optimisée par intention d'achat ni par territoire.</p>
+</div></section>
+
+<!-- DIGITAL -->
+<section id="digital"><div class="wrap">
+  <h2>Audit digital</h2>
+  <div class="h2sub">Là où ça fait mal — et où tout est démontrable en direct</div>
+
+  <div class="bomb" style="margin-bottom:16px">
+    <div class="ic">🧊</div>
+    <div>
+      <h3>Votre vitrine est figée depuis le 14 septembre 2021</h3>
+      <p>Le site est généré avec <b>WebAcappella 4.6.27</b>, un éditeur amateur abandonné, en XHTML 1.0 avec des balises de compatibilité <b>Internet Explorer 7</b>. Pendant que vous livriez la médiathèque de Champigny et des stations RATP, votre image en ligne, elle, n'a pas bougé d'un pixel en 5 ans.</p>
+      <div class="proof">$ curl -s https://briand-sas.fr | grep -i generator<br>&lt;!--page generated by WebAcappella--&gt; &lt;!-- 2021-09-14T09:47:11 --&gt;<br>&lt;meta name="generator" content="WebAcappella 4.6.27 ecommerce (OSX)"/&gt;</div>
+    </div>
+  </div>
+
+  <div class="bomb amber" style="margin-bottom:22px">
+    <div class="ic">🤫</div>
+    <div>
+      <h3>25,7 M€ de chiffre d'affaires… et quasiment aucun avis nulle part</h3>
+      <p>3 avis sur GoWork, 0 avis PagesJaunes, pas de fiche Google étoffée trouvée, ~1 133 abonnés LinkedIn sans animation visible. Votre réputation en ligne est une page blanche : ce sont les annuaires et vos concurrents qui racontent votre marché à votre place — y compris aux jeunes maçons et conducteurs de travaux que vous cherchez à recruter.</p>
+      <div class="proof">gowork.fr/briand-sas-villiers-sur-marne → 3 avis · pagesjaunes.fr → « aucun internaute n'a encore laissé d'avis »</div>
+    </div>
+  </div>
+
+  <div class="grid g3">
+    <div class="card"><h3>SEO fantôme</h3><ul>
+      <li><b>0 article de blog</b> — 53 pages, toutes institutionnelles</li>
+      <li>Title : « Entreprise Générale de Bâtiment - 94 » — aucune page par intention (« construction école », « accord-cadre ») ni par territoire</li>
+      <li>Absent des requêtes métier IDF ; 4ᵉ sur sa propre ville</li>
+      <li>Page « actualités » et « chantiers en cours » figées depuis 2021</li>
+    </ul></div>
+    <div class="card"><h3>Site figé</h3><ul>
+      <li>WebAcappella 4.6.27 (2021) · XHTML 1.0 · balises IE7/IE9</li>
+      <li>Aucune mise à jour détectée depuis le <b>14/09/2021</b></li>
+      <li>Domaine OVH créé en 2009 — <b>17 ans d'ancienneté SEO inexploités</b></li>
+      <li>Expiration domaine : 13/03/2027 — à surveiller (renouvellement OVH grand public)</li>
+    </ul></div>
+    <div class="card"><h3>Réputation &amp; réseaux</h3><ul>
+      <li>LinkedIn : <b>1 133 abonnés</b>, pas de flux d'activité visible</li>
+      <li>Avis clients : 3 (GoWork) · PagesJaunes : 0</li>
+      <li><b>Zéro Facebook / Instagram</b> trouvés</li>
+      <li>Page recrutement du site figée — dans le métier le plus en pénurie de France</li>
+    </ul></div>
+  </div>
+  <p class="src">Vérifiable en direct : <code>curl https://briand-sas.fr</code> (generator + horodatage) · briand-sas.fr/sitemap.xml · rdap.nic.fr/domain/briand-sas.fr · gowork.fr · pagesjaunes.fr. Consultés le 06/07/2026.</p>
+</div></section>
+
+<!-- AXES -->
+<section id="axes"><div class="wrap">
+  <h2>Ce que Jonction automatise pour vous</h2>
+  <div class="h2sub">5 leviers, alignés sur vos douleurs réelles</div>
+
+  <div class="axe"><div class="num">01</div><div>
+    <h3>Veille &amp; réponse aux appels d'offres</h3>
+    <p>Surveillance automatique BOAMP/AWS/maximilien des AO gros œuvre 75/93/94/77, pré-qualification, trame de mémoire technique pré-remplie à partir de vos 30 références.</p>
+    <p class="why">Vous vivez des marchés publics (15 marchés DECP) mais votre dernier marché publié date de 2023 — pendant que la commande de rénovation des bailleurs (passoires F/G) explose.</p>
+  </div></div>
+  <div class="axe"><div class="num">02</div><div>
+    <h3>Études de prix &amp; devis accélérés</h3>
+    <p>Pré-chiffrage assisté (bordereaux, historique de prix, variantes), relecture automatique des CCTP, alertes sur les pièges des CCAP.</p>
+    <p class="why">Conducteurs de travaux et économistes sont introuvables (BMO 2026) : chaque heure de chiffrage économisée = un AO de plus traité à effectif constant.</p>
+  </div></div>
+  <div class="axe"><div class="num">03</div><div>
+    <h3>Relance des donneurs d'ordre &amp; récurrence</h3>
+    <p>CRM simple + relances automatiques de vos acheteurs historiques (Champigny, Saint-Maur, Malakoff, SEMAPA…), campagnes ciblées bailleurs sociaux 94 sur l'angle réglementaire.</p>
+    <p class="why">« Vos logements G sont interdits de location depuis 2025, les F en 2028 » — l'argument qui déclenche les consultations de réhabilitation.</p>
+  </div></div>
+  <div class="axe"><div class="num">04</div><div>
+    <h3>Contenu &amp; SEO local en pilote automatique</h3>
+    <p>Vos 30 références recyclées en études de cas et posts LinkedIn, pages par intention (« construction crèche IDF », « accord-cadre maçonnerie 94 ») et par territoire.</p>
+    <p class="why">EGV, 25× plus petit, et FT Bâtiment captent VOS requêtes. Le contenu existe déjà — il est enfermé dans un site de 2021.</p>
+  </div></div>
+  <div class="axe"><div class="num">05</div><div>
+    <h3>Sourcing &amp; marque employeur</h3>
+    <p>Diffusion multi-jobboards automatisée, réponses aux candidats sous 24 h, animation LinkedIn, collecte d'avis salariés et clients.</p>
+    <p class="why">Maçon = 1er métier en tension de France (14 000+ projets de recrutement, 65 % difficiles). Aujourd'hui, un candidat qui vous google trouve un site IE7 et 3 avis.</p>
+  </div></div>
+
+  <div class="pitch" style="margin-top:30px">
+    <div class="q">« Le marché se consolide — <b>Fayat à 143,8 M€, Bouygues via Brézillon</b> — au sortir d'une récession qui a éliminé un quart des entreprises fragiles, pendant que la réglementation (RE2020, passoires F/G, RGE) crée une vague de chantiers. Pour une maison familiale saine comme la vôtre, la façon de rester <b>indépendante</b> et de prendre la part des sortants, c'est le binôme : <b>une IA qui veille, chiffre et relance + un renfort dédié qui pilote et décroche</b> — à <b>1 500 €/mois, 3× moins cher qu'une embauche</b>, dans un métier où même les maçons sont introuvables. »</div>
+  </div>
+</div></section>
+
+<!-- RENFORTS JONCTION -->
+<section id="renforts"><div class="wrap">
+  <h2>Vos renforts Jonction — équipe dédiée</h2>
+  <div class="h2sub">L'automatisation, c'est le moteur. Une personne dédiée, c'est le pilote.</div>
+  <p class="desc" style="color:var(--muted);max-width:760px;margin:-14px 0 24px">Un logiciel ne monte pas un dossier d'AO complet, ne rappelle pas un acheteur public, ne répond pas à un candidat maçon un samedi. Chaque automatisation est <b>pilotée par un(e) assistant(e) francophone dédié(e) à Madagascar</b> (passerelle téléphonique n° français), à <b>1 500 €/mois tout compris</b>.</p>
+
+  <div class="tbl-wrap" style="margin-bottom:22px">
+    <table>
+      <thead><tr><th>Renfort dédié</th><th>Ce qu'il fait chez vous — sur les douleurs qu'on a trouvées</th></tr></thead>
+      <tbody>
+        <tr><td><b>Assistant appels d'offres / ADV</b><br><span class="src">le cœur de votre modèle</span></td><td>Veille quotidienne BOAMP/Maximilien · monte les dossiers de candidature (DC1/DC2, mémoires) · suit les bons de commande de vos accords-cadres 48 mois · relance les acheteurs historiques (Champigny, Saint-Maur, Malakoff…).</td></tr>
+        <tr><td><b>Assistant études / chiffrage</b></td><td>Prépare les métrés et bordereaux, compile l'historique de prix, met en forme les devis et variantes — pour décharger vos conducteurs de travaux introuvables sur le marché.</td></tr>
+        <tr><td><b>Assistant recrutement / RH</b></td><td>Diffuse et suit les annonces (maçons, chefs de chantier, économistes), pré-qualifie les candidats sous 24 h, anime la page recrutement et la marque employeur — dans le 1er métier en pénurie de France.</td></tr>
+        <tr><td><b>Assistant marketing / contenu</b></td><td>Transforme vos 30 références (stations RATP, médiathèque, écoles, crèches, Passivhaus) en études de cas, posts LinkedIn et pages SEO locales · sollicite et gère les avis Google.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>Le coût, sans détour</h3>
+      <div class="row"><span class="k">Assistant / ADV en France (coût complet)</span><span class="v dang">~3 800 €/mois</span></div>
+      <div class="row"><span class="k">Renfort Jonction — tout compris</span><span class="v ok">1 500 €/mois</span></div>
+      <div class="row"><span class="k">Économie par poste</span><span class="v">−2 300 €/mois</span></div>
+      <div class="row"><span class="k">Sur un an</span><span class="v cold">−27 600 €/an</span></div>
+      <p class="src" style="margin-top:10px">France = salaire chargé + congés/absences + recrutement/RH + poste de travail. Jonction : ni charges, ni RH, ni engagement.</p>
+    </div>
+    <div class="card" style="border-color:var(--cold2)">
+      <h3>Le seuil de rentabilité</h3>
+      <p style="color:var(--muted);font-size:14.5px">Vos marchés se chiffrent en centaines de milliers, souvent en millions d'euros (médiathèque : 3,02 M€ ; école Gatin/Marin : 3,68 M€).</p>
+      <div class="pitch" style="padding:18px 20px;margin-top:10px">
+        <div class="q" style="font-size:18px"><b>Un seul appel d'offres gagné en plus</b> — celui que la veille aura attrapé et que l'équipe n'aurait pas eu le temps de chiffrer — et le renfort est <b>rentabilisé pour des années</b>.</div>
       </div>
     </div>
-  </section>
+  </div>
+</div></section>
 
-  <section>
-    <h2>Sources</h2>
-    <ul style="margin-top:0">
-      <li><a href="https://annuaire-entreprises.data.gouv.fr/entreprise/334982451">Annuaire des entreprises (INSEE/RNE) — BRIAND SAS</a></li>
-      <li><a href="https://data.economie.gouv.fr/explore/dataset/ratios_inpi_bce/">Ratios financiers INPI-BCE — data.economie.gouv.fr</a></li>
-      <li><a href="https://www.bodacc.fr/">BODACC — annonces commerciales, SIREN 334 982 451</a></li>
-      <li><a href="https://briand-sas.fr/">Site officiel BRIAND</a></li>
-      <li><a href="https://www.pappers.fr/entreprise/briand-sas-334982451">Pappers — BRIAND SAS</a></li>
-      <li><a href="https://www.societe.com/societe/briand-sas-334982451.html">Societe.com — BRIAND SAS</a></li>
-    </ul>
-  </section>
-</div>
+<footer><div class="wrap">
+  <b>Dossier préparé par Jonction</b> — externalisation francophone &amp; automatisation. Données 100 % issues de sources ouvertes (registres publics, open data, LinkedIn, web) collectées le 6 juillet 2026. Chiffres financiers = dépôts de comptes publics (exercices 2021 et 2023-2025 déposés en confidentiel — non accessibles). L'organigramme nominatif LinkedIn n'a volontairement pas été scanné pour cette démo. Note Google exacte à rejouer en direct pour l'effet démonstration. Ne pas confondre avec le Groupe Briand vendéen (construction métallique) — homonyme sans lien.
+  <div class="src" style="margin-top:14px">recherche-entreprises.api.gouv.fr · ratios INPI-BCE &amp; DECP (data.economie.gouv.fr) · BODACC · INSEE/Sirene · rdap.nic.fr · briand-sas.fr (+ sitemap) · linkedin.com/company/briand-sas · gowork.fr · pagesjaunes.fr · FFB / FFB Grand Paris IDF · SDES Sit@del · France Travail BMO 2026 · EY défaillances 2025 · Anah · Légifrance / EUR-Lex</div>
+</div></footer>
+
+</body>
+</html>
