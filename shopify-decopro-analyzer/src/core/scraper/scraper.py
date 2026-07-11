@@ -1,22 +1,24 @@
 """
-Scraper — recherche concurrentielle (Google Shopping / sites concurrents).
+Scraper — recherche concurrentielle (Google Shopping via Serper.dev).
 
-Deux modes prévus :
-  1) API de recherche (Serper.dev ou SerpAPI)  -> déterministe, rapide.
-  2) Sous-agent "Recherche" (LLM avec accès web) -> pour les cas où l'API
-     ne suffit pas (extraction de specs sur une fiche produit concurrente).
+Modes :
+  1) API Serper.dev (SERPER_API_KEY) — Google Shopping, rapide et structuré.
+  2) Sous-agent "Recherche" (LLM web) — pour extraire des specs sur une fiche
+     concurrente quand l'API ne suffit pas (à brancher séparément).
 
-Ce module expose une interface stable ; l'implémentation réseau est à activer
-avec une clé API (voir .env). En l'absence de clé, `search_competitors`
-retourne une réponse simulée pour permettre de tester le pipeline.
+Sans clé API : mode hors-ligne — AUCUN prix inventé (on signale l'absence).
 """
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 
 from src.models.product import Product
+
+SERPER_SHOPPING_URL = "https://google.serper.dev/shopping"
+TIMEOUT = 20
 
 
 @dataclass
@@ -33,19 +35,60 @@ def _query_for(product: Product) -> str:
     return " ".join(p for p in parts if p).strip()
 
 
-def search_competitors(product: Product, limit: int = 5) -> list[CompetitorOffer]:
-    """Recherche les offres concurrentes pour un produit.
+def _parse_price(raw) -> Optional[float]:
+    """'25,00 €' / '€25.00' / '1 234,50 €' -> float. None si illisible."""
+    if raw is None:
+        return None
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    s = str(raw)
+    s = re.sub(r"[^\d,.\s]", "", s).strip().replace(" ", "")
+    if not s:
+        return None
+    # format FR "1.234,50" -> "1234.50" ; sinon on retire les virgules de millier
+    if "," in s and "." in s:
+        s = s.replace(".", "").replace(",", ".")
+    elif "," in s:
+        s = s.replace(",", ".")
+    try:
+        return round(float(s), 2)
+    except ValueError:
+        return None
 
-    Si SERPER_API_KEY / SERPAPI_KEY est présent, interroge l'API.
-    Sinon, renvoie une liste vide + un avertissement (mode hors-ligne).
-    """
-    api_key = os.getenv("SERPER_API_KEY") or os.getenv("SERPAPI_KEY")
+
+def search_competitors(product: Product, limit: int = 8) -> list[CompetitorOffer]:
+    """Retourne les offres concurrentes pour un produit (Google Shopping)."""
+    api_key = os.getenv("SERPER_API_KEY")
     query = _query_for(product)
     if not api_key:
-        # Mode hors-ligne : on ne fabrique pas de faux prix (principe : pas d'invention).
-        print(f"  [scraper] Pas de clé API — recherche ignorée pour: {query!r}")
+        print(f"  [scraper] Pas de SERPER_API_KEY — recherche ignorée pour: {query!r}")
         return []
-    # TODO: implémenter l'appel Serper/SerpAPI ici (requests.post ...).
-    raise NotImplementedError(
-        "Brancher l'appel Serper/SerpAPI. Query prête = " + repr(query)
-    )
+
+    import requests  # import paresseux : le reste du pipeline tourne sans cette dépendance
+
+    country = os.getenv("MARKET_COUNTRY", "fr")
+    payload = {"q": query, "gl": country, "hl": country}
+    headers = {"X-API-KEY": api_key, "Content-Type": "application/json"}
+    try:
+        resp = requests.post(SERPER_SHOPPING_URL, json=payload, headers=headers, timeout=TIMEOUT)
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as e:
+        print(f"  [scraper] Erreur API pour {query!r}: {e}")
+        return []
+
+    offers: list[CompetitorOffer] = []
+    for item in (data.get("shopping") or [])[:limit]:
+        offers.append(CompetitorOffer(
+            source=item.get("source", "") or item.get("seller", ""),
+            title=item.get("title", ""),
+            price=_parse_price(item.get("price")),
+            url=item.get("link", ""),
+            specs={k: item.get(k) for k in ("delivery", "rating", "ratingCount") if item.get(k)},
+        ))
+    return offers
+
+
+def competitor_prices(offers: list[CompetitorOffer]) -> list[float]:
+    """Extrait la liste des prix valides (utile pour l'analyzer)."""
+    return [o.price for o in offers if isinstance(o.price, (int, float)) and o.price > 0]
