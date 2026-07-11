@@ -1,0 +1,10 @@
+# Coeur CLI
+typer>=0.12
+rich>=13.7
+# Données & rapports
+pandas>=2.2
+openpyxl>=3.1
+# Scraping / recherche concurrentielle
+requests>=2.31
+python-dotenv>=1.0
+# (le module loader fonctionne sans ces dépendances — stdlib only)
