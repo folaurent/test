@@ -1,0 +1,28 @@
+# systemd — boucle 24/7 de l'agent CEO (dialogue Slack + cycles).
+# Installe : voir docs/DEPLOY_VPS.md
+#
+# 1) place le repo dans /opt/company  (ou adapte WorkingDirectory ci-dessous)
+# 2) crée /opt/company/.env (secrets)  — voir .env.example
+# 3) sudo cp deploy/company-agent.service /etc/systemd/system/
+# 4) sudo systemctl daemon-reload && sudo systemctl enable --now company-agent
+# 5) journalctl -u company-agent -f   (suivre les logs)
+
+[Unit]
+Description=Agent CEO autonome (Deco and pro) — dialogue Slack + cycles
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Adapte le chemin et l'utilisateur à ton VPS :
+WorkingDirectory=/opt/company
+User=deploy
+ExecStart=/usr/bin/env bash scripts/agent_loop.sh
+Restart=always
+RestartSec=10
+# Réglages optionnels :
+# Environment=LISTEN_INTERVAL=30
+# Environment=CYCLE_EVERY=3600
+
+[Install]
+WantedBy=multi-user.target

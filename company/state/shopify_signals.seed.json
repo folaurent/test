@@ -1,0 +1,25 @@
+{
+  "_comment": "Seed RÉEL embarqué dans le repo (relevé via le MCP Shopify). Utilisé comme source de données quand aucun fichier live state/shopify_signals.json n'est présent — pratique pour un déploiement VPS frais. Le pont MCP (/ingest-shopify) écrit shopify_signals.json qui a la priorité sur ce seed.",
+  "source": "shopify-mcp:Deco and pro",
+  "window": "30d",
+  "kpis": [
+    {"name": "conversion_rate", "value": 0.0, "unit": "%", "assumption": false},
+    {"name": "organic_traffic", "value": 38, "unit": "visits", "assumption": false},
+    {"name": "cart_abandon_rate", "value": 100.0, "unit": "%", "assumption": false},
+    {"name": "repeat_purchase_rate", "value": 0.0, "unit": "%", "assumption": false}
+  ],
+  "context": {
+    "funnel_30d": {"sessions": 38, "cart_additions": 3, "reached_checkout": 2, "completed": 0},
+    "traffic_sources": {"direct": 36, "search": 1, "social": 1},
+    "devices": {"desktop": 34, "mobile": 4},
+    "catalog": {"active_products_min": 50, "more_pages": true,
+                "price_eur": {"min": 5.0, "median": 27.0, "max": 2496.0}}
+  },
+  "signals": [
+    "Boutique : Deco and pro (carrelage/travertin + sanitaire + meubles déco, France, EUR)",
+    "Catalogue : 50+ produits, prix 5-2496 EUR (médiane 27 EUR)",
+    "Trafic 30j : 38 sessions - 36 direct, 1 search, 1 social (aucun canal d'acquisition actif)",
+    "Entonnoir 30j : 38 sessions -> 3 paniers -> 2 checkout -> 0 achat (conversion 0%)",
+    "Diagnostic : trafic faible quasi 100% direct ; conversion nulle malgre des paniers"
+  ]
+}
