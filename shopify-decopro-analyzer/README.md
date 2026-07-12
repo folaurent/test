@@ -69,3 +69,12 @@ DRY_RUN=1 python -m src.archive_stn_duplicates    # simulation
 DRY_RUN=0 python -m src.archive_stn_duplicates    # réel
 ```
 Toujours lancer en `DRY_RUN=1` d'abord et lire le rapport.
+
+## Correction des prix STN à 0 € (Shopify Admin API)
+Certaines séries STN ont été importées sans prix (0 €) et mises en brouillon.
+Ce script les reprice depuis le tarif (par SKU → réf) et réactive celles dont
+toutes les variantes ont un prix.
+```bash
+DRY_RUN=1 python -m src.fix_stn_prices     # simulation
+DRY_RUN=0 python -m src.fix_stn_prices      # réel
+```
