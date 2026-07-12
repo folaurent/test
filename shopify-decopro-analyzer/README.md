@@ -52,3 +52,20 @@ cohérence, analyse de prix, description marketing alternative).
 ## Sécurité
 `.env` jamais commité. Aucune donnée inventée : sans clé API, le scraper
 n'ajoute pas de faux prix (il signale simplement l'absence de données).
+
+## Traitement en masse du catalogue STN (Shopify Admin API)
+
+Nécessite `SHOPIFY_STORE` + `SHOPIFY_ADMIN_TOKEN` (app perso, scope `write_products`)
+et le tarif STN dans `data/input/` (voir `.env.example`).
+
+```bash
+# 1) Enrichir toutes les fiches STN (conditionnement par format, depuis le tarif)
+DRY_RUN=1 python -m src.enrich_stn_descriptions   # simulation
+DRY_RUN=0 python -m src.enrich_stn_descriptions   # réel
+
+# 2) Archiver les doublons (anciennes fiches mono-format) — sûr : n'archive que
+#    si une fiche consolidée existe pour la série
+DRY_RUN=1 python -m src.archive_stn_duplicates    # simulation
+DRY_RUN=0 python -m src.archive_stn_duplicates    # réel
+```
+Toujours lancer en `DRY_RUN=1` d'abord et lire le rapport.
