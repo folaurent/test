@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     telegram_allowed_user_ids: str = ""
     telegram_allowed_chat_ids: str = ""
 
+    # Slack (Socket Mode : pas d'URL publique à exposer)
+    slack_bot_token: SecretStr = SecretStr("")      # xoxb-...
+    slack_app_token: SecretStr = SecretStr("")      # xapp-... (Socket Mode)
+    slack_allowed_user_ids: str = ""                # CSV de U0XXXXX (users Slack)
+    slack_allowed_channel_ids: str = ""             # CSV de C0XXXXX / D0XXXXX (DMs)
+
     # Supabase
     supabase_url: str = ""
     supabase_service_key: SecretStr = SecretStr("")
@@ -104,6 +110,18 @@ class Settings(BaseSettings):
     def allowed_telegram_chat_ids(self) -> frozenset[int]:
         return frozenset(
             int(x) for x in self.telegram_allowed_chat_ids.split(",") if x.strip()
+        )
+
+    @property
+    def allowed_slack_user_ids(self) -> frozenset[str]:
+        return frozenset(
+            x.strip() for x in self.slack_allowed_user_ids.split(",") if x.strip()
+        )
+
+    @property
+    def allowed_slack_channel_ids(self) -> frozenset[str]:
+        return frozenset(
+            x.strip() for x in self.slack_allowed_channel_ids.split(",") if x.strip()
         )
 
 

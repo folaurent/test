@@ -9,6 +9,7 @@ set -euo pipefail
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-/home/user/test}"
 JARVIS_DIR="$PROJECT_DIR/jarvis"
 SUPERVISOR="$JARVIS_DIR/scripts/supervisor.sh"
+SUPERVISOR_SLACK="$JARVIS_DIR/scripts/supervisor_slack.sh"
 HOOK_LOG="$JARVIS_DIR/logs/hook.log"
 
 mkdir -p "$JARVIS_DIR/logs"
@@ -32,10 +33,21 @@ if [ ! -f "$JARVIS_DIR/.env" ]; then
   exit 0
 fi
 
-# Spawn en background, detached, stdout/stderr redirigés.
+# Spawn Telegram supervisor.
 cd "$JARVIS_DIR"
 nohup bash "$SUPERVISOR" > logs/supervisor_stdout.log 2>&1 &
 disown || true
+echo "[$(date -Iseconds)] supervisor (telegram) spawned pid=$!" >> "$HOOK_LOG"
 
-echo "[$(date -Iseconds)] supervisor spawned pid=$!" >> "$HOOK_LOG"
+# Spawn Slack supervisor (skip interne s'il n'y a pas de tokens Slack).
+if [ -x "$SUPERVISOR_SLACK" ]; then
+  if pgrep -f "scripts/supervisor_slack.sh" > /dev/null 2>&1; then
+    echo "[$(date -Iseconds)] supervisor_slack already running — skip" >> "$HOOK_LOG"
+  else
+    nohup bash "$SUPERVISOR_SLACK" > logs/supervisor_slack_stdout.log 2>&1 &
+    disown || true
+    echo "[$(date -Iseconds)] supervisor_slack spawned pid=$!" >> "$HOOK_LOG"
+  fi
+fi
+
 exit 0
