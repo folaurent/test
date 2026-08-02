@@ -1,0 +1,42 @@
+# Allowlist providers. Builder ne peut provisionner que ces services.
+# Toute addition = validation Telegram + DPA signé.
+llm:
+  - id: anthropic
+    dpa_required: true
+    zdr_required: true  # Zero Data Retention pour PII
+    zones_allowed: ["FR", "DACH", "UK", "US", "CA", "IT", "ES", "PT", "BENELUX", "NORDICS"]
+  - id: openai
+    dpa_required: true
+    zdr_required: true
+    zones_allowed: ["*"]
+  - id: ollama
+    local: true
+    fallback_only: true
+
+email_sending:
+  - id: resend
+    dpa_required: true
+    regions: ["eu-west"]
+    notes: "Domaines dédiés, warmup obligatoire"
+  - id: postmark
+    dpa_required: true
+    regions: ["us-east"]
+
+storage:
+  - id: supabase
+    dpa_required: true
+    region: "eu-west-1"
+  - id: s3_ovh
+    dpa_required: true
+    region: "gra"
+
+social:
+  - id: linkedin
+    notes: "via Unipile ou Waalaxy, respect quotas stricts, jamais bypass"
+
+# Providers INTERDITS (raison)
+blocked:
+  - id: cookie_data_brokers
+    reason: "RGPD intenable + réputation"
+  - id: scraping_as_a_service_non_whitelisted
+    reason: "Base légale incertaine"

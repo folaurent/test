@@ -1,0 +1,15 @@
+# Configs critiques — Builder REFUSE de modifier sans double confirmation
+# Telegram + tag `critical:true`.
+critical:
+  - path: jarvis/core/scope.py
+    reason: "Filtre périmètre Sika/Parexlanko. Modifier = casser le verrou."
+  - path: jarvis/security/kill_switch.py
+    reason: "Kill switch global."
+  - path: jarvis/telegram_bot/auth.py
+    reason: "Whitelist Telegram."
+  - path: jarvis/rgpd/register.py
+    reason: "Registre art.30 — exigence légale."
+  - path: config/providers_allowlist.yml
+    reason: "Allowlist providers."
+  - path: .env.example
+    reason: "Template env — ne modifier qu'après validation sécurité."

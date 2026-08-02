@@ -1,0 +1,23 @@
+# Environnement
+.env
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Base de données
+data/*.db
+
+# Logs
+logs/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
